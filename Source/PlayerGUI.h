@@ -16,6 +16,10 @@ public:
 
     void buttonClicked(juce::Button* button) override;
     void sliderValueChanged(juce::Slider* slider) override;
+    float getCurrentVolume() const {
+        return volumeSlider.getValue();
+    }
+
 
     // Callbacks for parent component
     std::function<void()> onLoadFile;
@@ -29,6 +33,8 @@ private:
     juce::TextButton stopButton { "Stop" };
     juce::Slider volumeSlider;
     juce::Label volumeLabel;
+    juce::TextButton forwardButton{ ">> 10s" };
+    juce::TextButton backwardButton{ "<< 10s" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerGUI)
 };

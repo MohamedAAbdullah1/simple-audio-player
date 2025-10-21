@@ -8,6 +8,8 @@ public:
     const juce::String getApplicationName() override { return "Simple Audio Player"; }
     const juce::String getApplicationVersion() override { return "1.0"; }
 
+    void skipForward(double seconds);
+    void skipBackward(double seconds);
     void initialise(const juce::String&) override
     {
         // Create and show the main window
