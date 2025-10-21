@@ -7,6 +7,7 @@ PlayerGUI::PlayerGUI()
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
+
     }
 
     // Volume slider
@@ -17,6 +18,10 @@ PlayerGUI::PlayerGUI()
     volumeSlider.addListener(this);
     addAndMakeVisible(volumeSlider);
 
+    addAndMakeVisible(forwardButton);
+    addAndMakeVisible(backwardButton);
+    forwardButton.addListener(this);
+    backwardButton.addListener(this);
     // Volume label
     volumeLabel.setText("Volume:", juce::dontSendNotification);
     volumeLabel.attachToComponent(&volumeSlider, true);

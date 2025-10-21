@@ -21,6 +21,8 @@ public:
     void stop();
     void restart();
     void setVolume(float volume);
+    void skipForward(double seconds);
+    void skipBackward(double seconds);
 
     bool isPlaying() const;
 

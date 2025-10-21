@@ -73,3 +73,24 @@ bool PlayerAudio::isPlaying() const
 {
     return transportSource.isPlaying();
 }
+void PlayerAudio::skipForward(double seconds)
+{
+    if (transportSource.getLengthInSeconds() > 0)
+    {
+        double newPosition = transportSource.getCurrentPosition() + seconds;
+        if (newPosition > transportSource.getLengthInSeconds())
+            newPosition = transportSource.getLengthInSeconds();
+        transportSource.setPosition(newPosition);
+    }
+}
+
+void PlayerAudio::skipBackward(double seconds)
+{
+    if (transportSource.getLengthInSeconds() > 0)
+    {
+        double newPosition = transportSource.getCurrentPosition() - seconds;
+        if (newPosition < 0)
+            newPosition = 0.0;
+        transportSource.setPosition(newPosition);
+    }
+}
