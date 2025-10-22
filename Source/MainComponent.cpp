@@ -5,6 +5,7 @@ MainComponent::MainComponent()
     gui.onLoadFile = [this]() { handleLoadFile(); };
     gui.onRestart = [this]() { handleRestart(); };
     gui.onStop = [this]() { handleStop(); };
+    gui.onLoopToggled = [this](bool(loop))  { handleLoopToggled(loop); };
     gui.onVolumeChanged = [this](float vol) { handleVolumeChanged(vol); };
 
     addAndMakeVisible(gui);
@@ -102,6 +103,10 @@ void MainComponent::handleRestart()
 void MainComponent::handleStop()
 {
     audioPlayer.stop();
+}
+void MainComponent::handleLoopToggled(bool isLooping)
+{
+    audioPlayer.setLooping(isLooping);
 }
 
 void MainComponent::handleVolumeChanged(float volume)

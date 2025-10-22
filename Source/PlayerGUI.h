@@ -25,12 +25,14 @@ public:
     std::function<void()> onLoadFile;
     std::function<void()> onRestart;
     std::function<void()> onStop;
+    std::function<void(bool)> onLoopToggled;
     std::function<void(float)> onVolumeChanged;
 
 private:
     juce::TextButton loadButton { "Load Files" };
     juce::TextButton restartButton { "Restart" };
     juce::TextButton stopButton { "Stop" };
+    juce::ToggleButton loopButton {"Loop"};
     juce::Slider volumeSlider;
     juce::Label volumeLabel;
     juce::TextButton forwardButton{ ">> 10s" };
