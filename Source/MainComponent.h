@@ -29,6 +29,7 @@ private:
     void handleRestart();
     void handleStop();
     void handleVolumeChanged(float volume);
+    void handleLoopToggled(bool isLooping);
 
     PlayerAudio audioPlayer;
     PlayerGUI gui;
