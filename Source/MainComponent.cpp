@@ -11,11 +11,9 @@ MainComponent::MainComponent()
     addAndMakeVisible(gui);
     addAndMakeVisible(forwardButton);
     addAndMakeVisible(backwardButton);
-    addAndMakeVisible(muteButton);
 
     forwardButton.setButtonText(">> 10s");
     backwardButton.setButtonText("<< 10s");
-    muteButton.setButtonText("Mute");
 
     forwardButton.onClick = [this]() {
         audioPlayer.skipForward(10.0);
@@ -23,20 +21,6 @@ MainComponent::MainComponent()
 
     backwardButton.onClick = [this]() {
         audioPlayer.skipBackward(10.0);
-        };
-
-    muteButton.onClick = [this]() {
-        if (!isMuted) {
-            previousVolume = gui.getCurrentVolume();
-            audioPlayer.setVolume(0.0f);
-            muteButton.setButtonText("Unmute");
-            isMuted = true;
-        }
-        else {
-            audioPlayer.setVolume(previousVolume);
-            muteButton.setButtonText("Mute");
-            isMuted = false;
-        }
         };
 
     setSize(500, 250);
@@ -73,7 +57,6 @@ void MainComponent::resized()
     gui.setBounds(0, 0, getWidth(), getHeight() - 40);
     forwardButton.setBounds(10, getHeight() - 35, 80, 30);
     backwardButton.setBounds(100, getHeight() - 35, 80, 30);
-    muteButton.setBounds(190, getHeight() - 35, 80, 30);
 }
 
 void MainComponent::handleLoadFile()
