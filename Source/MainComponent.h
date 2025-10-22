@@ -20,9 +20,7 @@ public:
 private:
     juce::TextButton forwardButton;
     juce::TextButton backwardButton;
-    juce::TextButton muteButton;
 
-    bool isMuted = false;
     float previousVolume = 1.0f;
 
     void handleLoadFile();

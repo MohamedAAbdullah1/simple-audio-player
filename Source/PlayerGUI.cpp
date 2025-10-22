@@ -46,7 +46,7 @@ void PlayerGUI::resized()
     loadButton.setBounds(margin, y, 100, 40);
     restartButton.setBounds(140, y, 80, 40);
     stopButton.setBounds(240, y, 80, 40);
-    loopButton.setBounds(340, y, 80, 40);  
+    loopButton.setBounds(340, y, 80, 40);
     volumeSlider.setBounds(70, 100, getWidth() - 90, 30);
 }
 
