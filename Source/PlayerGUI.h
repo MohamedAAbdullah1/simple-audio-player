@@ -36,8 +36,7 @@ private:
     juce::TextButton gotostartButton { "Start" };
     juce::TextButton gotoendButton { "End" };
     juce::ToggleButton loopButton {"Loop"};
-    juce::Slider volumeSlider;
-    juce::Label volumeLabel;
+
     juce::TextButton forwardButton{ ">> 10s" };
     juce::TextButton backwardButton{ "<< 10s" };
     juce::TextButton muteButton{ "Mute" };
