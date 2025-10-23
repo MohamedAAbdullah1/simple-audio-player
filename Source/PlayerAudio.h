@@ -24,15 +24,20 @@ public:
     void skipForward(double seconds);
     void skipBackward(double seconds);
     void setLooping(bool shouldLoop);
-    bool isLooping()const;
-
-
+    bool isLooping() const;
     bool isPlaying() const;
+
+    void toggleMute();
 
 private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
+
     bool looping = false;
+
+    bool isMuted = false;
+    float lastVolume = 1.0f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };

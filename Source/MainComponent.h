@@ -18,6 +18,7 @@ public:
     void resized() override;
 
 private:
+    juce::TextButton muteButton;
     juce::TextButton forwardButton;
     juce::TextButton backwardButton;
 

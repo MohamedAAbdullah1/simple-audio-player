@@ -4,24 +4,24 @@
 #include <functional>
 
 class PlayerGUI : public juce::Component,
-                  public juce::Button::Listener,
-                  public juce::Slider::Listener
+    public juce::Button::Listener,
+    public juce::Slider::Listener
 {
 public:
     PlayerGUI();
     ~PlayerGUI() override;
-
     void paint(juce::Graphics& g) override;
     void resized() override;
 
     void buttonClicked(juce::Button* button) override;
     void sliderValueChanged(juce::Slider* slider) override;
+
     float getCurrentVolume() const {
         return volumeSlider.getValue();
     }
 
+    juce::TextButton& getMuteButton() { return muteButton; }
 
-    // Callbacks for parent component
     std::function<void()> onLoadFile;
     std::function<void()> onRestart;
     std::function<void()> onStop;
@@ -29,15 +29,20 @@ public:
     std::function<void(float)> onVolumeChanged;
 
 private:
-    juce::TextButton loadButton { "Load Files" };
-    juce::TextButton restartButton { "Restart" };
-    juce::TextButton startButton { "Play" };
-    juce::TextButton stopButton { "Stop" };
-    juce::ToggleButton loopButton {"Loop"};
-    juce::Slider volumeSlider;
-    juce::Label volumeLabel;
+    juce::TextButton loadButton{ "Load Files" };
+    juce::TextButton restartButton{ "Restart" };
+    juce::TextButton startButton{ "Play" };
+    juce::TextButton stopButton{ "Stop" };
+    juce::ToggleButton loopButton{ "Loop" };
     juce::TextButton forwardButton{ ">> 10s" };
     juce::TextButton backwardButton{ "<< 10s" };
+    juce::TextButton muteButton{ "Mute" };
+
+    juce::Slider volumeSlider;
+    juce::Label volumeLabel;
+
+    bool isMuted = false;
+    float lastVolume = 0.5f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerGUI)
 };
