@@ -1,0 +1,43 @@
+# Build directories
+cmake-build-*/
+build/
+builds/
+Builds/
+
+# IDE files
+.idea/
+.vscode/
+*.user
+*.suo
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# JUCE specific
+JuceLibraryCode/
+*.jucer.backup
+
+# Don't ignore JUCE folder (we need it)
+!JUCE/
