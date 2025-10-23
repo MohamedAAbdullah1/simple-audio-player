@@ -20,6 +20,8 @@ public:
     void start();
     void stop();
     void restart();
+    void setPosition(float position);
+    float getLenght();
     void setVolume(float volume);
     void skipForward(double seconds);
     void skipBackward(double seconds);

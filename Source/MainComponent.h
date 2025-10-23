@@ -26,7 +26,10 @@ private:
 
     void handleLoadFile();
     void handleRestart();
+    void handleStart();
     void handleStop();
+    void handleGostart();
+    void handleGoend();
     void handleVolumeChanged(float volume);
     void handleLoopToggled(bool isLooping);
 

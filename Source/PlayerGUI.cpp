@@ -2,7 +2,7 @@
 
 PlayerGUI::PlayerGUI()
 {
-    for (auto* btn : { &loadButton, &restartButton, &stopButton })
+    for (auto* btn : { &loadButton, &restartButton, &stopButton,&startButton,&gotostartButton,&gotoendButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
@@ -48,9 +48,12 @@ void PlayerGUI::resized()
 
     loadButton.setBounds(margin, y, 100, 40);
     restartButton.setBounds(140, y, 80, 40);
-    stopButton.setBounds(240, y, 80, 40);
-    loopButton.setBounds(340, y, 80, 40);
-    volumeSlider.setBounds(70, 100, getWidth() - 140, 30) ;
+    startButton.setBounds(240, y, 80, 40);
+    stopButton.setBounds(340, y, 80, 40);
+    gotostartButton.setBounds(440, y, 80, 40);
+    gotoendButton.setBounds(540, y, 80, 40);
+    loopButton.setBounds(640, y, 80, 40);
+    volumeSlider.setBounds(70, 100, getWidth() - 90, 30);
 }
 
 void PlayerGUI::buttonClicked(juce::Button* button)
@@ -59,8 +62,14 @@ void PlayerGUI::buttonClicked(juce::Button* button)
         onLoadFile();
     else if (button == &restartButton && onRestart)
         onRestart();
+    else if (button == &startButton && onStart)
+        onStart();
     else if (button == &stopButton && onStop)
         onStop();
+    else if (button == &gotostartButton && onGostart)
+        onGostart();
+    else if (button == &gotoendButton && onGostart)
+        onGoend();
     else if (button == &loopButton && onLoopToggled)
         onLoopToggled(loopButton.getToggleState());
 }

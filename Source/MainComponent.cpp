@@ -5,6 +5,9 @@ MainComponent::MainComponent()
     gui.onLoadFile = [this]() { handleLoadFile(); };
     gui.onRestart = [this]() { handleRestart(); };
     gui.onStop = [this]() { handleStop(); };
+    gui.onStart = [this]() { handleStart(); };
+    gui.onGostart = [this]() { handleGostart(); };
+    gui.onGoend = [this]() { handleGoend(); };
     gui.onLoopToggled = [this](bool loop) { handleLoopToggled(loop); };
     gui.onVolumeChanged = [this](float vol) { handleVolumeChanged(vol); };
 
@@ -91,9 +94,21 @@ void MainComponent::handleRestart()
     audioPlayer.restart();
 }
 
+void MainComponent::handleStart() {
+    audioPlayer.start();
+}
+
 void MainComponent::handleStop()
 {
     audioPlayer.stop();
+}
+
+void MainComponent::handleGostart() {
+    audioPlayer.setPosition(0.0);
+}
+
+void MainComponent::handleGoend() {
+    audioPlayer.setPosition(audioPlayer.getLenght()-3.0f);
 }
 
 void MainComponent::handleLoopToggled(bool isLooping)

@@ -59,13 +59,20 @@ void PlayerAudio::start()
 void PlayerAudio::stop()
 {
     transportSource.stop();
-    transportSource.setPosition(0.0);
 }
 
 void PlayerAudio::restart()
 {
     transportSource.setPosition(0.0);
     transportSource.start();
+}
+
+void PlayerAudio::setPosition(float position) {
+    transportSource.setPosition(position);
+}
+
+float PlayerAudio::getLenght() {
+    return  transportSource.getLengthInSeconds();
 }
 
 void PlayerAudio::setVolume(float volume)

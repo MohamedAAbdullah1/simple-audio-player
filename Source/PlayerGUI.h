@@ -24,7 +24,10 @@ public:
 
     std::function<void()> onLoadFile;
     std::function<void()> onRestart;
+    std::function<void()> onStart;
     std::function<void()> onStop;
+    std::function<void()> onGostart;
+    std::function<void()> onGoend;
     std::function<void(bool)> onLoopToggled;
     std::function<void(float)> onVolumeChanged;
 
