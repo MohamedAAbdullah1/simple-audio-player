@@ -18,12 +18,14 @@ void PlayerAudio::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 
 void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-     if (looping && readerSource != nullptr) {
-           if (!transportSource.isPlaying() ||  transportSource.getCurrentPosition() >= transportSource.getLengthInSeconds()) {
-               transportSource.setPosition(0.0);
-               transportSource.start();
-         }
-     }
+    if (looping && readerSource != nullptr)
+    {
+        if (!transportSource.isPlaying() || transportSource.getCurrentPosition() >= transportSource.getLengthInSeconds())
+        {
+            transportSource.setPosition(0.0);
+            transportSource.start();
+        }
+    }
     transportSource.getNextAudioBlock(bufferToFill);
 }
 
@@ -39,15 +41,11 @@ void PlayerAudio::loadFile(const juce::File& file)
 
     if (auto* reader = formatManager.createReaderFor(file))
     {
-        // Disconnect old source first
         transportSource.stop();
         transportSource.setSource(nullptr);
         readerSource.reset();
 
-        // Create new reader source
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-
-        // Attach safely
         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
         transportSource.start();
     }
@@ -72,18 +70,27 @@ void PlayerAudio::restart()
 
 void PlayerAudio::setVolume(float volume)
 {
-    transportSource.setGain(volume);
+    if (!isMuted)
+        transportSource.setGain(volume);
+
+    lastVolume = volume;
 }
-void PlayerAudio::setLooping(bool shouldLoop) {
+
+void PlayerAudio::setLooping(bool shouldLoop)
+{
     looping = shouldLoop;
 }
-bool PlayerAudio::isLooping()const {
+
+bool PlayerAudio::isLooping() const
+{
     return looping;
 }
+
 bool PlayerAudio::isPlaying() const
 {
     return transportSource.isPlaying();
 }
+
 void PlayerAudio::skipForward(double seconds)
 {
     if (transportSource.getLengthInSeconds() > 0)
@@ -103,5 +110,20 @@ void PlayerAudio::skipBackward(double seconds)
         if (newPosition < 0)
             newPosition = 0.0;
         transportSource.setPosition(newPosition);
+    }
+}
+
+void PlayerAudio::toggleMute()
+{
+    if (isMuted)
+    {
+        transportSource.setGain(lastVolume);
+        isMuted = false;
+    }
+    else
+    {
+        lastVolume = transportSource.getGain();
+        transportSource.setGain(0.0f);
+        isMuted = true;
     }
 }

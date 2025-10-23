@@ -5,15 +5,20 @@ MainComponent::MainComponent()
     gui.onLoadFile = [this]() { handleLoadFile(); };
     gui.onRestart = [this]() { handleRestart(); };
     gui.onStop = [this]() { handleStop(); };
-    gui.onLoopToggled = [this](bool(loop))  { handleLoopToggled(loop); };
+    gui.onLoopToggled = [this](bool loop) { handleLoopToggled(loop); };
     gui.onVolumeChanged = [this](float vol) { handleVolumeChanged(vol); };
+
+    gui.getMuteButton().onClick = [this]() {
+        audioPlayer.toggleMute();
+    };
 
     addAndMakeVisible(gui);
     addAndMakeVisible(forwardButton);
     addAndMakeVisible(backwardButton);
-
+    addAndMakeVisible(muteButton);
     forwardButton.setButtonText(">> 10s");
     backwardButton.setButtonText("<< 10s");
+    muteButton.setButtonText("Mute");
 
     forwardButton.onClick = [this]() {
         audioPlayer.skipForward(10.0);
@@ -54,9 +59,12 @@ void MainComponent::paint(juce::Graphics& g)
 
 void MainComponent::resized()
 {
+
     gui.setBounds(0, 0, getWidth(), getHeight() - 40);
     forwardButton.setBounds(10, getHeight() - 35, 80, 30);
     backwardButton.setBounds(100, getHeight() - 35, 80, 30);
+    muteButton.setBounds(190, getHeight() - 35, 80, 30);
+
 }
 
 void MainComponent::handleLoadFile()
@@ -87,6 +95,7 @@ void MainComponent::handleStop()
 {
     audioPlayer.stop();
 }
+
 void MainComponent::handleLoopToggled(bool isLooping)
 {
     audioPlayer.setLooping(isLooping);
