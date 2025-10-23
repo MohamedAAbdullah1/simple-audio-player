@@ -31,6 +31,7 @@ public:
 private:
     juce::TextButton loadButton { "Load Files" };
     juce::TextButton restartButton { "Restart" };
+    juce::TextButton startButton { "Play" };
     juce::TextButton stopButton { "Stop" };
     juce::ToggleButton loopButton {"Loop"};
     juce::Slider volumeSlider;
