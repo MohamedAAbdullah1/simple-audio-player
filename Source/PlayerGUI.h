@@ -33,6 +33,8 @@ private:
     juce::TextButton restartButton { "Restart" };
     juce::TextButton startButton { "Play" };
     juce::TextButton stopButton { "Stop" };
+    juce::TextButton gotostartButton { "Start" };
+    juce::TextButton gotoendButton { "End" };
     juce::ToggleButton loopButton {"Loop"};
     juce::Slider volumeSlider;
     juce::Label volumeLabel;
