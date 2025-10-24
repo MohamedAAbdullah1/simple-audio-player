@@ -68,7 +68,7 @@ void PlayerGUI::buttonClicked(juce::Button* button)
         onStop();
     else if (button == &gotostartButton && onGostart)
         onGostart();
-    else if (button == &gotoendButton && onGostart)
+    else if (button == &gotoendButton && onGoend)
         onGoend();
     else if (button == &loopButton && onLoopToggled)
         onLoopToggled(loopButton.getToggleState());

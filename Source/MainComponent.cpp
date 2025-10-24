@@ -11,10 +11,6 @@ MainComponent::MainComponent()
     gui.onLoopToggled = [this](bool loop) { handleLoopToggled(loop); };
     gui.onVolumeChanged = [this](float vol) { handleVolumeChanged(vol); };
 
-    gui.getMuteButton().onClick = [this]() {
-        audioPlayer.toggleMute();
-    };
-
     addAndMakeVisible(gui);
     addAndMakeVisible(forwardButton);
     addAndMakeVisible(backwardButton);
@@ -29,6 +25,16 @@ MainComponent::MainComponent()
 
     backwardButton.onClick = [this]() {
         audioPlayer.skipBackward(10.0);
+        };
+
+    muteButton.onClick = [this]() {
+        audioPlayer.toggleMute();
+        if (audioPlayer.isMuted()) {
+            muteButton.setButtonText("Unmute");
+        }
+        else {
+            muteButton.setButtonText("Mute");
+        }
         };
 
     setSize(500, 250);
@@ -62,12 +68,10 @@ void MainComponent::paint(juce::Graphics& g)
 
 void MainComponent::resized()
 {
-
     gui.setBounds(0, 0, getWidth(), getHeight() - 40);
     forwardButton.setBounds(10, getHeight() - 35, 80, 30);
     backwardButton.setBounds(100, getHeight() - 35, 80, 30);
     muteButton.setBounds(190, getHeight() - 35, 80, 30);
-
 }
 
 void MainComponent::handleLoadFile()
@@ -85,6 +89,7 @@ void MainComponent::handleLoadFile()
             if (file.existsAsFile())
             {
                 audioPlayer.loadFile(file);
+                muteButton.setButtonText("Mute");
             }
         });
 }
@@ -108,7 +113,7 @@ void MainComponent::handleGostart() {
 }
 
 void MainComponent::handleGoend() {
-    audioPlayer.setPosition(audioPlayer.getLenght()-3.0f);
+    audioPlayer.setPosition(audioPlayer.getLenght() - 3.0f);
 }
 
 void MainComponent::handleLoopToggled(bool isLooping)
