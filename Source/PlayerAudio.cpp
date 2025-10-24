@@ -3,6 +3,7 @@
 PlayerAudio::PlayerAudio()
 {
     formatManager.registerBasicFormats();
+    transportSource.setGain(lastVolume);
 }
 
 PlayerAudio::~PlayerAudio()
@@ -47,6 +48,14 @@ void PlayerAudio::loadFile(const juce::File& file)
 
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
         transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+
+        if (muted) {
+            transportSource.setGain(0.0f);
+        }
+        else {
+            transportSource.setGain(lastVolume);
+        }
+
         transportSource.start();
     }
 }
@@ -72,15 +81,15 @@ void PlayerAudio::setPosition(float position) {
 }
 
 float PlayerAudio::getLenght() {
-    return  transportSource.getLengthInSeconds();
+    return transportSource.getLengthInSeconds();
 }
 
 void PlayerAudio::setVolume(float volume)
 {
-    if (!isMuted)
-        transportSource.setGain(volume);
-
     lastVolume = volume;
+    if (!muted) {
+        transportSource.setGain(volume);
+    }
 }
 
 void PlayerAudio::setLooping(bool shouldLoop)
@@ -122,15 +131,16 @@ void PlayerAudio::skipBackward(double seconds)
 
 void PlayerAudio::toggleMute()
 {
-    if (isMuted)
-    {
-        transportSource.setGain(lastVolume);
-        isMuted = false;
-    }
-    else
-    {
-        lastVolume = transportSource.getGain();
+    muted = !muted;
+    if (muted) {
         transportSource.setGain(0.0f);
-        isMuted = true;
     }
+    else {
+        transportSource.setGain(lastVolume);
+    }
+}
+
+bool PlayerAudio::isMuted() const
+{
+    return muted;
 }

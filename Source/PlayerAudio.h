@@ -30,6 +30,7 @@ public:
     bool isPlaying() const;
 
     void toggleMute();
+    bool isMuted() const;
 
 private:
     juce::AudioFormatManager formatManager;
@@ -37,9 +38,8 @@ private:
     juce::AudioTransportSource transportSource;
 
     bool looping = false;
-
-    bool isMuted = false;
-    float lastVolume = 1.0f;
+    bool muted = false;
+    float lastVolume = 0.8f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };

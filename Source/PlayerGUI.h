@@ -32,13 +32,13 @@ public:
     std::function<void(float)> onVolumeChanged;
 
 private:
-    juce::TextButton loadButton { "Load Files" };
-    juce::TextButton restartButton { "Restart" };
-    juce::TextButton startButton { "Play" };
-    juce::TextButton stopButton { "Stop" };
-    juce::TextButton gotostartButton { "Start" };
-    juce::TextButton gotoendButton { "End" };
-    juce::ToggleButton loopButton {"Loop"};
+    juce::TextButton loadButton{ "Load Files" };
+    juce::TextButton restartButton{ "Restart" };
+    juce::TextButton startButton{ "Play" };
+    juce::TextButton stopButton{ "Stop" };
+    juce::TextButton gotostartButton{ "Start" };
+    juce::TextButton gotoendButton{ "End" };
+    juce::ToggleButton loopButton{ "Loop" };
 
     juce::TextButton forwardButton{ ">> 10s" };
     juce::TextButton backwardButton{ "<< 10s" };
