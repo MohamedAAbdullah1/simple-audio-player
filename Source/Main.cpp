@@ -5,9 +5,10 @@ class SimpleAudioPlayer : public juce::JUCEApplication
 {
 public:
     const juce::String getApplicationName() override { return "Simple Audio Player"; }
-    const juce::String getApplicationVersion() override { return "1.0";}
+    const juce::String getApplicationVersion() override { return "1.0"; }
     void skipForward(double seconds);
     void skipBackward(double seconds);
+
     void initialise(const juce::String&) override
     {
         mainWindow = std::make_unique<MainWindow>(getApplicationName());
@@ -29,7 +30,7 @@ private:
         {
             setUsingNativeTitleBar(true);
             setContentOwned(new MainComponent(), true);
-            centreWithSize(700, 300);
+            centreWithSize(700, 350);
             setVisible(true);
         }
 
