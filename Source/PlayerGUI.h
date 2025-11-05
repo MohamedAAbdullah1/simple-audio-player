@@ -22,6 +22,7 @@ public:
     void setPositionSliderRange(double maxRange);
     void setPositionSliderValue(double newValue);
     void updateABButtonColors(bool aSet, bool bSet);
+    void setTrackName(const juce::String& name);
 
     std::function<void()> onLoadFile;
     std::function<void()> onRestart;
@@ -62,6 +63,8 @@ private:
     juce::TextButton setAButton{ "Set A" };
     juce::TextButton setBButton{ "Set B" };
     juce::TextButton clearABButton{ "Clear A-B" };
+
+    juce::Label trackLabel;
 
     bool isMuted = false;
     float lastVolume = 0.5f;

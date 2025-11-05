@@ -5,6 +5,7 @@ PlayerAudio::PlayerAudio()
     formatManager.registerBasicFormats();
     transportSource.setGain(lastVolume);
     resamplerSource = std::make_unique<juce::ResamplingAudioSource>(&transportSource, false, 2);
+    crossfadeGain = 1.0f;
 }
 
 PlayerAudio::~PlayerAudio()
@@ -71,13 +72,26 @@ void PlayerAudio::stop() { transportSource.stop(); }
 void PlayerAudio::restart() { transportSource.setPosition(0.0); transportSource.start(); }
 void PlayerAudio::setPosition(float position) { transportSource.setPosition(position); }
 float PlayerAudio::getLenght() { return transportSource.getLengthInSeconds(); }
-void PlayerAudio::setVolume(float volume) { lastVolume = volume; if (!muted) transportSource.setGain(volume); }
+void PlayerAudio::setVolume(float volume)
+{
+    lastVolume = volume;
+    updateGain();
+}
+void PlayerAudio::setCrossfadeGain(float gain)
+{
+    crossfadeGain = gain;
+    updateGain();
+}
 void PlayerAudio::setLooping(bool shouldLoop) { looping = shouldLoop; }
 bool PlayerAudio::isLooping() const { return looping; }
 bool PlayerAudio::isPlaying() const { return transportSource.isPlaying(); }
 void PlayerAudio::skipForward(double seconds) { transportSource.setPosition(std::min(transportSource.getCurrentPosition() + seconds, transportSource.getLengthInSeconds())); }
 void PlayerAudio::skipBackward(double seconds) { transportSource.setPosition(std::max(transportSource.getCurrentPosition() - seconds, 0.0)); }
-void PlayerAudio::toggleMute() { muted = !muted; transportSource.setGain(muted ? 0.0f : lastVolume); }
+void PlayerAudio::toggleMute()
+{
+    muted = !muted;
+    updateGain();
+}
 bool PlayerAudio::isMuted() const { return muted; }
 double PlayerAudio::getCurrentPosition() const { return transportSource.getCurrentPosition(); }
 
@@ -100,4 +114,15 @@ void PlayerAudio::clearLoopPoints()
     abLoopEngaged = false;
     abLoopStart = 0.0;
     abLoopEnd = -1.0;
+}
+
+juce::AudioSource* PlayerAudio::getAudioSource()
+{
+    return resamplerSource.get();
+}
+
+void PlayerAudio::updateGain()
+{
+    auto finalGain = muted ? 0.0f : lastVolume * crossfadeGain;
+    transportSource.setGain(finalGain);
 }
