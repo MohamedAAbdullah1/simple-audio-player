@@ -32,14 +32,21 @@ public:
     void toggleMute();
     bool isMuted() const;
 
+   
+    void setSpeed(double newSpeed);
+    double getSpeed() const { return playbackSpeed; }
+
 private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
+    std::unique_ptr<juce::ResamplingAudioSource> resamplerSource;
 
     bool looping = false;
     bool muted = false;
     float lastVolume = 0.8f;
+
+    double playbackSpeed = 1.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };

@@ -16,10 +16,7 @@ public:
     void buttonClicked(juce::Button* button) override;
     void sliderValueChanged(juce::Slider* slider) override;
 
-    float getCurrentVolume() const {
-        return volumeSlider.getValue();
-    }
-
+    float getCurrentVolume() const { return volumeSlider.getValue(); }
     juce::TextButton& getMuteButton() { return muteButton; }
 
     std::function<void()> onLoadFile;
@@ -30,6 +27,7 @@ public:
     std::function<void()> onGoend;
     std::function<void(bool)> onLoopToggled;
     std::function<void(float)> onVolumeChanged;
+    std::function<void(double)> onSpeedChanged; 
 
 private:
     juce::TextButton loadButton{ "Load Files" };
@@ -46,6 +44,8 @@ private:
 
     juce::Slider volumeSlider;
     juce::Label volumeLabel;
+    juce::Slider speedSlider;
+    juce::Label speedLabel;
 
     bool isMuted = false;
     float lastVolume = 0.5f;

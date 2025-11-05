@@ -2,7 +2,7 @@
 
 PlayerGUI::PlayerGUI()
 {
-    for (auto* btn : { &loadButton, &restartButton, &stopButton,&startButton,&gotostartButton,&gotoendButton })
+    for (auto* btn : { &loadButton, &restartButton, &stopButton, &startButton, &gotostartButton, &gotoendButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
@@ -30,11 +30,21 @@ PlayerGUI::PlayerGUI()
     volumeLabel.setText("Volume:", juce::dontSendNotification);
     volumeLabel.attachToComponent(&volumeSlider, true);
     addAndMakeVisible(volumeLabel);
+
+    
+    speedSlider.setRange(0.5, 2.0, 0.01);
+    speedSlider.setValue(1.0);
+    speedSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    speedSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 60, 20);
+    speedSlider.addListener(this);
+    addAndMakeVisible(speedSlider);
+
+    speedLabel.setText("Speed:", juce::dontSendNotification);
+    speedLabel.attachToComponent(&speedSlider, true);
+    addAndMakeVisible(speedLabel);
 }
 
-PlayerGUI::~PlayerGUI()
-{
-}
+PlayerGUI::~PlayerGUI() {}
 
 void PlayerGUI::paint(juce::Graphics& g)
 {
@@ -53,29 +63,24 @@ void PlayerGUI::resized()
     gotostartButton.setBounds(440, y, 80, 40);
     gotoendButton.setBounds(540, y, 80, 40);
     loopButton.setBounds(640, y, 80, 40);
+
     volumeSlider.setBounds(70, 100, getWidth() - 90, 30);
+    speedSlider.setBounds(70, 150, getWidth() - 90, 30);
 }
 
 void PlayerGUI::buttonClicked(juce::Button* button)
 {
-    if (button == &loadButton && onLoadFile)
-        onLoadFile();
-    else if (button == &restartButton && onRestart)
-        onRestart();
-    else if (button == &startButton && onStart)
-        onStart();
-    else if (button == &stopButton && onStop)
-        onStop();
-    else if (button == &gotostartButton && onGostart)
-        onGostart();
-    else if (button == &gotoendButton && onGoend)
-        onGoend();
-    else if (button == &loopButton && onLoopToggled)
-        onLoopToggled(loopButton.getToggleState());
+    if (button == &loadButton && onLoadFile) onLoadFile();
+    else if (button == &restartButton && onRestart) onRestart();
+    else if (button == &startButton && onStart) onStart();
+    else if (button == &stopButton && onStop) onStop();
+    else if (button == &gotostartButton && onGostart) onGostart();
+    else if (button == &gotoendButton && onGoend) onGoend();
+    else if (button == &loopButton && onLoopToggled) onLoopToggled(loopButton.getToggleState());
 }
 
 void PlayerGUI::sliderValueChanged(juce::Slider* slider)
 {
-    if (slider == &volumeSlider && onVolumeChanged)
-        onVolumeChanged(static_cast<float>(slider->getValue()));
+    if (slider == &volumeSlider && onVolumeChanged) onVolumeChanged(static_cast<float>(slider->getValue()));
+    else if (slider == &speedSlider && onSpeedChanged) onSpeedChanged(slider->getValue());
 }
