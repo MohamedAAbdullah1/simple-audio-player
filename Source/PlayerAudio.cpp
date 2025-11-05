@@ -22,10 +22,20 @@ void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
 {
     if (looping && readerSource != nullptr)
     {
-        if (!transportSource.isPlaying() || transportSource.getCurrentPosition() >= transportSource.getLengthInSeconds())
+        if (abLoopEngaged)
         {
-            transportSource.setPosition(0.0);
-            transportSource.start();
+            if (transportSource.getCurrentPosition() >= abLoopEnd)
+            {
+                transportSource.setPosition(abLoopStart);
+            }
+        }
+        else
+        {
+            if (!transportSource.isPlaying() || transportSource.getCurrentPosition() >= transportSource.getLengthInSeconds())
+            {
+                transportSource.setPosition(0.0);
+                transportSource.start();
+            }
         }
     }
     resamplerSource->getNextAudioBlock(bufferToFill);
@@ -69,10 +79,25 @@ void PlayerAudio::skipForward(double seconds) { transportSource.setPosition(std:
 void PlayerAudio::skipBackward(double seconds) { transportSource.setPosition(std::max(transportSource.getCurrentPosition() - seconds, 0.0)); }
 void PlayerAudio::toggleMute() { muted = !muted; transportSource.setGain(muted ? 0.0f : lastVolume); }
 bool PlayerAudio::isMuted() const { return muted; }
+double PlayerAudio::getCurrentPosition() const { return transportSource.getCurrentPosition(); }
 
 void PlayerAudio::setSpeed(double newSpeed)
 {
     playbackSpeed = juce::jlimit(0.5, 2.0, newSpeed);
     if (resamplerSource)
         resamplerSource->setResamplingRatio(playbackSpeed);
+}
+
+void PlayerAudio::setLoopPoints(double startTime, double endTime)
+{
+    abLoopStart = startTime;
+    abLoopEnd = endTime;
+    abLoopEngaged = (abLoopEnd > abLoopStart);
+}
+
+void PlayerAudio::clearLoopPoints()
+{
+    abLoopEngaged = false;
+    abLoopStart = 0.0;
+    abLoopEnd = -1.0;
 }
