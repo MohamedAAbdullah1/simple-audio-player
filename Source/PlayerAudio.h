@@ -5,6 +5,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <memory>
+#include <map>
 
 class PlayerAudio
 {
@@ -38,6 +39,16 @@ public:
     void setCrossfadeGain(float gain);
     juce::AudioSource* getAudioSource();
 
+    void addMarker(const juce::String& name, double time);
+    void goToMarker(const juce::String& name);
+    juce::StringArray getMarkersList() const;
+    void clearAllMarkers();
+
+    void setCurrentFile(const juce::File& file) { currentFile = file; }
+    juce::File getCurrentFile() const { return currentFile; }
+    std::map<juce::String, double> getMarkersMap() const { return markers; }
+    void setMarkersMap(const std::map<juce::String, double>& m) { markers = m; }
+
 private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
@@ -53,6 +64,9 @@ private:
 
     float userVolume = 0.5f;
     float crossfadeGain = 1.0f;
+
+    juce::File currentFile;
+    std::map<juce::String, double> markers;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };

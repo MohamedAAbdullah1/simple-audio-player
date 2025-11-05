@@ -5,8 +5,8 @@
 #include "PlayerGUI.h"
 
 class MainComponent : public juce::AudioAppComponent,
-                      public juce::Slider::Listener,
-                      public juce::Timer
+    public juce::Slider::Listener,
+    public juce::Timer
 {
 public:
     MainComponent();
@@ -42,6 +42,13 @@ private:
 
     double loopStartTime2 = 0.0;
     double loopEndTime2 = -1.0;
+
+    juce::File sessionFile = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
+        .getChildFile("SimpleAudioPlayerSession.txt");
+
+    
+    void saveSessionToDisk();
+    void loadSessionFromDisk();
 
     void handleLoadFile1();
     void handleRestart1();

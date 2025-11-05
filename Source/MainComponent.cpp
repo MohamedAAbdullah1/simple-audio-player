@@ -31,6 +31,28 @@ MainComponent::MainComponent()
     gui1.setTrackName("Track 1");
     gui2.setTrackName("Track 2");
 
+    gui1.onAddMarker = [this]() {
+        double currentTime = audioPlayer1.getCurrentPosition();
+        juce::String name = "Marker " + juce::String(audioPlayer1.getMarkersList().size() + 1)
+            + " (" + juce::String(currentTime, 2) + "s)";
+        audioPlayer1.addMarker(name, currentTime);
+        gui1.updateMarkerList(audioPlayer1.getMarkersList());
+        };
+    gui1.onSelectMarker = [this](const juce::String& markerName) {
+        audioPlayer1.goToMarker(markerName);
+        };
+
+    gui2.onAddMarker = [this]() {
+        double currentTime = audioPlayer2.getCurrentPosition();
+        juce::String name = "Marker " + juce::String(audioPlayer2.getMarkersList().size() + 1)
+            + " (" + juce::String(currentTime, 2) + "s)";
+        audioPlayer2.addMarker(name, currentTime);
+        gui2.updateMarkerList(audioPlayer2.getMarkersList());
+        };
+    gui2.onSelectMarker = [this](const juce::String& markerName) {
+        audioPlayer2.goToMarker(markerName);
+        };
+
     addAndMakeVisible(gui1);
     addAndMakeVisible(gui2);
 
@@ -50,14 +72,17 @@ MainComponent::MainComponent()
 
     crossfader.setLookAndFeel(&globalLookAndFeel);
 
-
     setSize(1000, 500);
     setAudioChannels(0, 2);
     startTimerHz(30);
+
+    loadSessionFromDisk();
 }
 
 MainComponent::~MainComponent()
 {
+    saveSessionToDisk();
+
     crossfader.setLookAndFeel(nullptr);
     gui1.setLookAndFeel(nullptr);
     gui2.setLookAndFeel(nullptr);
@@ -140,11 +165,21 @@ void MainComponent::handleLoadFile1()
             {
                 audioPlayer1.loadFile(file);
                 gui1.setPositionSliderRange(audioPlayer1.getLenght());
+                gui1.loadWaveform(file); 
                 handleClearAB1();
+
+                audioPlayer1.clearAllMarkers();
+                gui1.updateMarkerList(audioPlayer1.getMarkersList());
             }
         });
 }
-void MainComponent::handleRestart1() { audioPlayer1.restart(); }
+void MainComponent::handleRestart1()
+{
+    audioPlayer1.restart();
+
+    audioPlayer1.clearAllMarkers();
+    gui1.updateMarkerList(audioPlayer1.getMarkersList());
+}
 void MainComponent::handlePlayStop1()
 {
     if (audioPlayer1.isPlaying())
@@ -190,11 +225,21 @@ void MainComponent::handleLoadFile2()
             {
                 audioPlayer2.loadFile(file);
                 gui2.setPositionSliderRange(audioPlayer2.getLenght());
+                gui2.loadWaveform(file); 
                 handleClearAB2();
+
+                audioPlayer2.clearAllMarkers();
+                gui2.updateMarkerList(audioPlayer2.getMarkersList());
             }
         });
 }
-void MainComponent::handleRestart2() { audioPlayer2.restart(); }
+void MainComponent::handleRestart2()
+{
+    audioPlayer2.restart();
+
+    audioPlayer2.clearAllMarkers();
+    gui2.updateMarkerList(audioPlayer2.getMarkersList());
+}
 void MainComponent::handlePlayStop2()
 {
     if (audioPlayer2.isPlaying())
@@ -228,3 +273,105 @@ void MainComponent::handleClearAB2()
     updateABButtons2();
 }
 void MainComponent::updateABButtons2() { gui2.updateABButtonColors(loopStartTime2 > 0.0, loopEndTime2 > 0.0); }
+
+void MainComponent::saveSessionToDisk()
+{
+    juce::String content;
+
+    content += "TRACK1\n";
+    auto file1 = audioPlayer1.getCurrentFile();
+    content += (file1.existsAsFile() ? file1.getFullPathName() : juce::String()) + "\n";
+    content += juce::String(audioPlayer1.getCurrentPosition()) + "\n";
+    
+    auto markers1 = audioPlayer1.getMarkersMap();
+    for (auto& kv : markers1)
+    {
+        content += kv.first + "|" + juce::String(kv.second) + "\n";
+    }
+
+    content += "TRACK2\n";
+    auto file2 = audioPlayer2.getCurrentFile();
+    content += (file2.existsAsFile() ? file2.getFullPathName() : juce::String()) + "\n";
+    content += juce::String(audioPlayer2.getCurrentPosition()) + "\n";
+    auto markers2 = audioPlayer2.getMarkersMap();
+    for (auto& kv : markers2)
+    {
+        content += kv.first + "|" + juce::String(kv.second) + "\n";
+    }
+
+    if (sessionFile.existsAsFile())
+        sessionFile.replaceWithText(content);
+    else
+    {
+        sessionFile.create();
+        sessionFile.replaceWithText(content);
+    }
+}
+
+void MainComponent::loadSessionFromDisk()
+{
+    if (!sessionFile.existsAsFile())
+        return;
+
+    juce::String content = sessionFile.loadFileAsString();
+    juce::StringArray lines;
+    lines.addLines(content);
+
+    int idx = 0;
+     
+    if (idx < lines.size() && lines[idx].trim() == "TRACK1") idx++;
+    juce::String path1 = (idx < lines.size() ? lines[idx++].trim() : juce::String());
+    juce::String pos1 = (idx < lines.size() ? lines[idx++].trim() : juce::String());
+    std::map<juce::String, double> markers1;
+    while (idx < lines.size() && lines[idx] != "TRACK2")
+    {
+        auto line = lines[idx++];
+        if (line.containsChar('|'))
+        {
+            auto parts = juce::StringArray::fromTokens(line, "|", "");
+            if (parts.size() == 2) markers1[parts[0]] = parts[1].getDoubleValue();
+        }
+    }
+
+    if (idx < lines.size() && lines[idx].trim() == "TRACK2") idx++;
+    juce::String path2 = (idx < lines.size() ? lines[idx++].trim() : juce::String());
+    juce::String pos2 = (idx < lines.size() ? lines[idx++].trim() : juce::String());
+    std::map<juce::String, double> markers2;
+    while (idx < lines.size())
+    {
+        auto line = lines[idx++];
+        if (line.containsChar('|'))
+        {
+            auto parts = juce::StringArray::fromTokens(line, "|", "");
+            if (parts.size() == 2) markers2[parts[0]] = parts[1].getDoubleValue();
+        }
+    }
+
+    if (path1.isNotEmpty())
+    {
+        juce::File f1(path1);
+        if (f1.existsAsFile())
+        {
+            audioPlayer1.loadFile(f1);
+            gui1.setPositionSliderRange(audioPlayer1.getLenght());
+            gui1.loadWaveform(f1); 
+            if (pos1.isNotEmpty()) audioPlayer1.setPosition(pos1.getDoubleValue());
+            audioPlayer1.setMarkersMap(markers1);
+            gui1.updateMarkerList(audioPlayer1.getMarkersList());
+        }
+    }
+
+    if (path2.isNotEmpty())
+    {
+        juce::File f2(path2);
+        if (f2.existsAsFile())
+        {
+            audioPlayer2.loadFile(f2);
+            gui2.setPositionSliderRange(audioPlayer2.getLenght());
+            gui2.loadWaveform(f2); 
+            if (pos2.isNotEmpty()) audioPlayer2.setPosition(pos2.getDoubleValue());
+            audioPlayer2.setMarkersMap(markers2);
+            gui2.updateMarkerList(audioPlayer2.getMarkersList());
+        }
+    }
+}

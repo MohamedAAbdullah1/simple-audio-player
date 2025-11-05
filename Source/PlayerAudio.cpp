@@ -1,6 +1,7 @@
 #include "PlayerAudio.h"
 
-PlayerAudio::PlayerAudio() : transportSource(new juce::AudioTransportSource())
+PlayerAudio::PlayerAudio()
+    : transportSource(new juce::AudioTransportSource())
 {
     formatManager.registerBasicFormats();
     transportSource->setGain(userVolume * crossfadeGain);
@@ -62,6 +63,8 @@ void PlayerAudio::loadFile(const juce::File& file)
 
         resamplerSource->setResamplingRatio(playbackSpeed);
 
+        currentFile = file;
+
         transportSource->start();
     }
 }
@@ -116,4 +119,31 @@ void PlayerAudio::setCrossfadeGain(float gain)
 juce::AudioSource* PlayerAudio::getAudioSource()
 {
     return resamplerSource.get();
+}
+
+void PlayerAudio::addMarker(const juce::String& name, double time)
+{
+    markers[name] = time;
+}
+
+void PlayerAudio::goToMarker(const juce::String& name)
+{
+    auto it = markers.find(name);
+    if (it != markers.end())
+    {
+        setPosition(it->second);
+    }
+}
+
+juce::StringArray PlayerAudio::getMarkersList() const
+{
+    juce::StringArray arr;
+    for (auto& kv : markers)
+        arr.add(kv.first);
+    return arr;
+}
+
+void PlayerAudio::clearAllMarkers()
+{
+    markers.clear();
 }
