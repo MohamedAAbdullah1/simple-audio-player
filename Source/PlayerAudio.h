@@ -28,13 +28,16 @@ public:
     void setLooping(bool shouldLoop);
     bool isLooping() const;
     bool isPlaying() const;
+    double getCurrentPosition() const;
 
     void toggleMute();
     bool isMuted() const;
 
-   
     void setSpeed(double newSpeed);
     double getSpeed() const { return playbackSpeed; }
+
+    void setLoopPoints(double startTime, double endTime);
+    void clearLoopPoints();
 
 private:
     juce::AudioFormatManager formatManager;
@@ -47,6 +50,10 @@ private:
     float lastVolume = 0.8f;
 
     double playbackSpeed = 1.0;
+
+    double abLoopStart = 0.0;
+    double abLoopEnd = -1.0;
+    bool abLoopEngaged = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };

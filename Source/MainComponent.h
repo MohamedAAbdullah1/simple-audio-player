@@ -4,7 +4,8 @@
 #include "PlayerAudio.h"
 #include "PlayerGUI.h"
 
-class MainComponent : public juce::AudioAppComponent
+class MainComponent : public juce::AudioAppComponent,
+                      public juce::Timer
 {
 public:
     MainComponent();
@@ -16,6 +17,7 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
     juce::TextButton muteButton;
@@ -23,6 +25,8 @@ private:
     juce::TextButton backwardButton;
 
     float previousVolume = 1.0f;
+    double loopStartTime = 0.0;
+    double loopEndTime = -1.0;
 
     void handleLoadFile();
     void handleRestart();
@@ -32,6 +36,11 @@ private:
     void handleGoend();
     void handleVolumeChanged(float volume);
     void handleLoopToggled(bool isLooping);
+    void handlePositionChanged(double newPosition);
+    void handleSetA();
+    void handleSetB();
+    void handleClearAB();
+    void updateABButtons();
 
     PlayerAudio audioPlayer;
     PlayerGUI gui;

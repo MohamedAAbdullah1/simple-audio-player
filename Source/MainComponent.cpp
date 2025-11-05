@@ -11,6 +11,10 @@ MainComponent::MainComponent()
     gui.onLoopToggled = [this](bool loop) { handleLoopToggled(loop); };
     gui.onVolumeChanged = [this](float vol) { handleVolumeChanged(vol); };
     gui.onSpeedChanged = [this](double speed) { audioPlayer.setSpeed(speed); };
+    gui.onPositionChanged = [this](double pos) { handlePositionChanged(pos); };
+    gui.onSetA = [this]() { handleSetA(); };
+    gui.onSetB = [this]() { handleSetB(); };
+    gui.onClearAB = [this]() { handleClearAB(); };
 
     addAndMakeVisible(gui);
     addAndMakeVisible(forwardButton);
@@ -29,6 +33,7 @@ MainComponent::MainComponent()
 
     setSize(700, 350);
     setAudioChannels(0, 2);
+    startTimerHz(30);
 }
 
 MainComponent::~MainComponent()
@@ -58,10 +63,13 @@ void MainComponent::paint(juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    gui.setBounds(0, 0, getWidth(), getHeight() - 100);
-    forwardButton.setBounds(10, getHeight() - 80, 80, 30);
-    backwardButton.setBounds(100, getHeight() - 80, 80, 30);
-    muteButton.setBounds(190, getHeight() - 80, 80, 30);
+    int guiHeight = 280;
+    gui.setBounds(0, 0, getWidth(), guiHeight);
+
+    int buttonY = guiHeight + 10;
+    forwardButton.setBounds(10, buttonY, 80, 30);
+    backwardButton.setBounds(100, buttonY, 80, 30);
+    muteButton.setBounds(190, buttonY, 80, 30);
 }
 
 void MainComponent::handleLoadFile()
@@ -75,6 +83,8 @@ void MainComponent::handleLoadFile()
             {
                 audioPlayer.loadFile(file);
                 muteButton.setButtonText("Mute");
+                gui.setPositionSliderRange(audioPlayer.getLenght());
+                handleClearAB();
             }
         });
 }
@@ -86,3 +96,44 @@ void MainComponent::handleGostart() { audioPlayer.setPosition(0.0); }
 void MainComponent::handleGoend() { audioPlayer.setPosition(audioPlayer.getLenght() - 3.0f); }
 void MainComponent::handleLoopToggled(bool isLooping) { audioPlayer.setLooping(isLooping); }
 void MainComponent::handleVolumeChanged(float volume) { audioPlayer.setVolume(volume); }
+void MainComponent::handlePositionChanged(double newPosition) { audioPlayer.setPosition(newPosition); }
+
+void MainComponent::timerCallback()
+{
+    gui.setPositionSliderValue(audioPlayer.getCurrentPosition());
+}
+
+void MainComponent::handleSetA()
+{
+    loopStartTime = audioPlayer.getCurrentPosition();
+    if (loopEndTime > 0 && loopStartTime > loopEndTime)
+    {
+        loopEndTime = -1.0;
+    }
+    audioPlayer.setLoopPoints(loopStartTime, loopEndTime);
+    updateABButtons();
+}
+
+void MainComponent::handleSetB()
+{
+    loopEndTime = audioPlayer.getCurrentPosition();
+    if (loopEndTime < loopStartTime)
+    {
+        loopStartTime = 0.0;
+    }
+    audioPlayer.setLoopPoints(loopStartTime, loopEndTime);
+    updateABButtons();
+}
+
+void MainComponent::handleClearAB()
+{
+    loopStartTime = 0.0;
+    loopEndTime = -1.0;
+    audioPlayer.clearLoopPoints();
+    updateABButtons();
+}
+
+void MainComponent::updateABButtons()
+{
+    gui.updateABButtonColors(loopStartTime > 0.0, loopEndTime > 0.0);
+}

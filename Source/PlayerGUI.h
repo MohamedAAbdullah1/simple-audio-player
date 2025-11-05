@@ -19,6 +19,10 @@ public:
     float getCurrentVolume() const { return volumeSlider.getValue(); }
     juce::TextButton& getMuteButton() { return muteButton; }
 
+    void setPositionSliderRange(double maxRange);
+    void setPositionSliderValue(double newValue);
+    void updateABButtonColors(bool aSet, bool bSet);
+
     std::function<void()> onLoadFile;
     std::function<void()> onRestart;
     std::function<void()> onStart;
@@ -27,7 +31,11 @@ public:
     std::function<void()> onGoend;
     std::function<void(bool)> onLoopToggled;
     std::function<void(float)> onVolumeChanged;
-    std::function<void(double)> onSpeedChanged; 
+    std::function<void(double)> onSpeedChanged;
+    std::function<void(double)> onPositionChanged;
+    std::function<void()> onSetA;
+    std::function<void()> onSetB;
+    std::function<void()> onClearAB;
 
 private:
     juce::TextButton loadButton{ "Load Files" };
@@ -46,6 +54,14 @@ private:
     juce::Label volumeLabel;
     juce::Slider speedSlider;
     juce::Label speedLabel;
+
+    juce::Slider positionSlider;
+    juce::Label currentTimeLabel;
+    juce::Label totalTimeLabel;
+
+    juce::TextButton setAButton{ "Set A" };
+    juce::TextButton setBButton{ "Set B" };
+    juce::TextButton clearABButton{ "Clear A-B" };
 
     bool isMuted = false;
     float lastVolume = 0.5f;
