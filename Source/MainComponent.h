@@ -5,8 +5,8 @@
 #include "PlayerGUI.h"
 
 class MainComponent : public juce::AudioAppComponent,
-                      public juce::Timer,
-                      public juce::Slider::Listener
+                      public juce::Slider::Listener,
+                      public juce::Timer
 {
 public:
     MainComponent();
@@ -18,34 +18,39 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
-    void timerCallback() override;
+
     void sliderValueChanged(juce::Slider* slider) override;
+    void timerCallback() override;
 
 private:
-    PlayerAudio audioPlayer1;
-    PlayerGUI gui1;
-    std::unique_ptr<juce::FileChooser> fileChooser1;
-    double loopStartTime1 = 0.0;
-    double loopEndTime1 = -1.0;
-
-    PlayerAudio audioPlayer2;
-    PlayerGUI gui2;
-    std::unique_ptr<juce::FileChooser> fileChooser2;
-    double loopStartTime2 = 0.0;
-    double loopEndTime2 = -1.0;
-
     juce::MixerAudioSource mixerSource;
+    PlayerAudio audioPlayer1;
+    PlayerAudio audioPlayer2;
+
+    PlayerGUI gui1;
+    PlayerGUI gui2;
     juce::Slider crossfader;
     juce::Label crossfaderLabel;
 
+    CustomLookAndFeel globalLookAndFeel;
+
+    std::unique_ptr<juce::FileChooser> fileChooser1;
+    std::unique_ptr<juce::FileChooser> fileChooser2;
+
+    double loopStartTime1 = 0.0;
+    double loopEndTime1 = -1.0;
+
+    double loopStartTime2 = 0.0;
+    double loopEndTime2 = -1.0;
+
     void handleLoadFile1();
     void handleRestart1();
-    void handleStart1();
-    void handleStop1();
-    void handleGostart1();
-    void handleGoend1();
-    void handleVolumeChanged1(float volume);
+    void handlePlayStop1();
+    void handleSkipBackward1();
+    void handleSkipForward1();
     void handleLoopToggled1(bool isLooping);
+    void handleVolumeChanged1(float volume);
+    void handleSpeedChanged1(double speed);
     void handlePositionChanged1(double newPosition);
     void handleSetA1();
     void handleSetB1();
@@ -54,12 +59,12 @@ private:
 
     void handleLoadFile2();
     void handleRestart2();
-    void handleStart2();
-    void handleStop2();
-    void handleGostart2();
-    void handleGoend2();
-    void handleVolumeChanged2(float volume);
+    void handlePlayStop2();
+    void handleSkipBackward2();
+    void handleSkipForward2();
     void handleLoopToggled2(bool isLooping);
+    void handleVolumeChanged2(float volume);
+    void handleSpeedChanged2(double speed);
     void handlePositionChanged2(double newPosition);
     void handleSetA2();
     void handleSetB2();
