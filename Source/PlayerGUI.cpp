@@ -10,7 +10,7 @@ static juce::String formatTime(double seconds)
 
 PlayerGUI::PlayerGUI()
 {
-    for (auto* btn : { &loadButton, &restartButton, &stopButton, &startButton, &gotostartButton, &gotoendButton, &setAButton, &setBButton, &clearABButton })
+    for (auto* btn : { &loadButton, &restartButton, &stopButton, &startButton, &gotostartButton, &gotoendButton, &setAButton, &setBButton, &clearABButton, &forwardButton, &backwardButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
@@ -29,11 +29,6 @@ PlayerGUI::PlayerGUI()
     volumeSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 60, 20);
     volumeSlider.addListener(this);
     addAndMakeVisible(volumeSlider);
-
-    addAndMakeVisible(forwardButton);
-    addAndMakeVisible(backwardButton);
-    forwardButton.addListener(this);
-    backwardButton.addListener(this);
 
     volumeLabel.setText("Volume:", juce::dontSendNotification);
     volumeLabel.attachToComponent(&volumeSlider, true);
@@ -64,6 +59,12 @@ PlayerGUI::PlayerGUI()
     totalTimeLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(totalTimeLabel);
 
+    juce::Font trackFont(18.0f);
+    trackFont.setBold(true);
+    trackLabel.setFont(trackFont);
+    trackLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(trackLabel);
+
     updateABButtonColors(false, false);
 }
 
@@ -72,33 +73,73 @@ PlayerGUI::~PlayerGUI() {}
 void PlayerGUI::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::darkgrey);
+    g.setColour(juce::Colours::black.withAlpha(0.2f));
+    g.drawRect(getLocalBounds(), 1.0f);
 }
 
 void PlayerGUI::resized()
 {
-    int y = 20;
-    int margin = 20;
+    juce::Grid grid;
+    using Track = juce::Grid::TrackInfo;
+    using Fr = juce::Grid::Fr; // Use fractional widths
+    using Px = juce::Grid::Px;
 
-    loadButton.setBounds(margin, y, 100, 40);
-    restartButton.setBounds(140, y, 80, 40);
-    startButton.setBounds(240, y, 80, 40);
-    stopButton.setBounds(340, y, 80, 40);
-    gotostartButton.setBounds(440, y, 80, 40);
-    gotoendButton.setBounds(540, y, 80, 40);
-    loopButton.setBounds(640, y, 80, 40);
+    // 5 صفوف
+    grid.templateRows.add(Track(Px(40)));
+    grid.templateRows.add(Track(Px(40)));
+    grid.templateRows.add(Track(Px(40)));
+    grid.templateRows.add(Track(Px(40)));
+    grid.templateRows.add(Track(Px(40)));
 
-    volumeSlider.setBounds(70, 100, getWidth() - 90, 30);
-    speedSlider.setBounds(70, 150, getWidth() - 90, 30);
+    // 8 أعمدة - نستخدم أرقام صحيحة لـ Fr
+    grid.templateColumns.add(Track(Fr(2))); // للعنوان - نعطيه مساحة أكبر
+    grid.templateColumns.add(Track(Fr(1)));
+    grid.templateColumns.add(Track(Fr(1)));
+    grid.templateColumns.add(Track(Fr(1)));
+    grid.templateColumns.add(Track(Fr(1)));
+    grid.templateColumns.add(Track(Fr(1)));
+    grid.templateColumns.add(Track(Fr(1)));
+    grid.templateColumns.add(Track(Fr(1)));
 
-    int yPos = 200;
-    currentTimeLabel.setBounds(10, yPos, 60, 30);
-    positionSlider.setBounds(70, yPos, getWidth() - 140, 30);
-    totalTimeLabel.setBounds(getWidth() - 70, yPos, 60, 30);
+    grid.setGap(Px(5)); // تقليل الفجوة لتناسب
 
-    int yPosButtons = yPos + 40;
-    setAButton.setBounds(margin, yPosButtons, 80, 30);
-    setBButton.setBounds(margin + 90, yPosButtons, 80, 30);
-    clearABButton.setBounds(margin + 180, yPosButtons, 100, 30);
+    // يجب استخدام grid.items.add() لكل عنصر
+
+    // الصف 1
+    grid.items.add(juce::GridItem(trackLabel).withColumn({ 1, 1 })); // العمود 1
+    grid.items.add(juce::GridItem(loadButton).withColumn({ 2, 2 })); // العمود 2
+    grid.items.add(juce::GridItem(restartButton).withColumn({ 3, 3 })); // العمود 3
+    grid.items.add(juce::GridItem(startButton).withColumn({ 4, 4 })); // العمود 4
+    grid.items.add(juce::GridItem(stopButton).withColumn({ 5, 5 })); // العمود 5
+    grid.items.add(juce::GridItem(loopButton).withColumn({ 6, 6 })); // العمود 6
+    grid.items.add(juce::GridItem(setAButton).withColumn({ 7, 7 })); // العمود 7
+    grid.items.add(juce::GridItem(setBButton).withColumn({ 8, 8 })); // العمود 8
+
+    // الصف 2
+    // volumeLabel ملتصق, لذلك نضع الشريط فقط
+    grid.items.add(juce::GridItem(volumeSlider).withColumn({ 1, 6 }).withAlignSelf(juce::GridItem::AlignSelf::stretch)); // Span 6
+    grid.items.add(juce::GridItem(clearABButton).withColumn({ 7, 7 })); // العمود 7
+    grid.items.add(juce::GridItem(muteButton).withColumn({ 8, 8 })); // العمود 8
+
+    // الصف 3
+    // speedLabel ملتصق
+    grid.items.add(juce::GridItem(speedSlider).withColumn({ 1, 6 }).withAlignSelf(juce::GridItem::AlignSelf::stretch)); // Span 6
+    grid.items.add(juce::GridItem(backwardButton).withColumn({ 7, 7 })); // العمود 7
+    grid.items.add(juce::GridItem(forwardButton).withColumn({ 8, 8 })); // العمود 8
+
+    // الصف 4
+    grid.items.add(juce::GridItem(currentTimeLabel).withColumn({ 1, 1 }).withAlignSelf(juce::GridItem::AlignSelf::center)); // Span 1
+    grid.items.add(juce::GridItem(positionSlider).withColumn({ 2, 7 }).withAlignSelf(juce::GridItem::AlignSelf::stretch));   // Span 6 (cols 2-7)
+    grid.items.add(juce::GridItem(totalTimeLabel).withColumn({ 8, 8 }).withAlignSelf(juce::GridItem::AlignSelf::center));   // Span 1 (col 8)
+
+    // الصف 5 - نضع فيه الأزرار المتبقية
+    grid.items.add(juce::GridItem(gotostartButton).withColumn({ 1, 2 })); // Span 2
+    grid.items.add(juce::GridItem(gotoendButton).withColumn({ 3, 4 })); // Span 2
+    // ترك الباقي فارغ
+
+    // يجب إضافة بعض الهوامش حول الشبكة
+    juce::Rectangle<int> gridBounds = getLocalBounds().reduced(10);
+    grid.performLayout(gridBounds);
 }
 
 void PlayerGUI::buttonClicked(juce::Button* button)
@@ -113,6 +154,7 @@ void PlayerGUI::buttonClicked(juce::Button* button)
     else if (button == &setAButton && onSetA) onSetA();
     else if (button == &setBButton && onSetB) onSetB();
     else if (button == &clearABButton && onClearAB) onClearAB();
+    // forward, backward, mute يتم التعامل معها في MainComponent في التصميم الأصلي
 }
 
 void PlayerGUI::sliderValueChanged(juce::Slider* slider)
@@ -139,4 +181,9 @@ void PlayerGUI::updateABButtonColors(bool aSet, bool bSet)
     auto& laf = getLookAndFeel();
     setAButton.setColour(juce::TextButton::buttonColourId, aSet ? laf.findColour(juce::TextButton::buttonOnColourId) : laf.findColour(juce::TextButton::buttonColourId));
     setBButton.setColour(juce::TextButton::buttonColourId, bSet ? laf.findColour(juce::TextButton::buttonOnColourId) : laf.findColour(juce::TextButton::buttonColourId));
+}
+
+void PlayerGUI::setTrackName(const juce::String& name)
+{
+    trackLabel.setText(name, juce::dontSendNotification);
 }
