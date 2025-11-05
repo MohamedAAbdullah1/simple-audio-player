@@ -1,16 +1,15 @@
 #include "PlayerAudio.h"
 
-PlayerAudio::PlayerAudio()
+PlayerAudio::PlayerAudio() : transportSource(new juce::AudioTransportSource())
 {
     formatManager.registerBasicFormats();
-    transportSource.setGain(lastVolume);
-    resamplerSource = std::make_unique<juce::ResamplingAudioSource>(&transportSource, false, 2);
-    crossfadeGain = 1.0f;
+    transportSource->setGain(userVolume * crossfadeGain);
+    resamplerSource = std::make_unique<juce::ResamplingAudioSource>(transportSource.get(), false, 2);
 }
 
 PlayerAudio::~PlayerAudio()
 {
-    transportSource.setSource(nullptr);
+    transportSource->setSource(nullptr);
     readerSource.reset();
 }
 
@@ -25,17 +24,17 @@ void PlayerAudio::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
     {
         if (abLoopEngaged)
         {
-            if (transportSource.getCurrentPosition() >= abLoopEnd)
+            if (transportSource->getCurrentPosition() >= abLoopEnd)
             {
-                transportSource.setPosition(abLoopStart);
+                transportSource->setPosition(abLoopStart);
             }
         }
         else
         {
-            if (!transportSource.isPlaying() || transportSource.getCurrentPosition() >= transportSource.getLengthInSeconds())
+            if (!transportSource->isPlaying() || transportSource->getCurrentPosition() >= transportSource->getLengthInSeconds())
             {
-                transportSource.setPosition(0.0);
-                transportSource.start();
+                transportSource->setPosition(0.0);
+                transportSource->start();
             }
         }
     }
@@ -54,46 +53,27 @@ void PlayerAudio::loadFile(const juce::File& file)
 
     if (auto* reader = formatManager.createReaderFor(file))
     {
-        transportSource.stop();
-        transportSource.setSource(nullptr);
+        transportSource->stop();
+        transportSource->setSource(nullptr);
         readerSource.reset();
 
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
-        transportSource.setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
+        transportSource->setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
 
         resamplerSource->setResamplingRatio(playbackSpeed);
 
-        transportSource.start();
+        transportSource->start();
     }
 }
 
-void PlayerAudio::start() { transportSource.start(); }
-void PlayerAudio::stop() { transportSource.stop(); }
-void PlayerAudio::restart() { transportSource.setPosition(0.0); transportSource.start(); }
-void PlayerAudio::setPosition(float position) { transportSource.setPosition(position); }
-float PlayerAudio::getLenght() { return transportSource.getLengthInSeconds(); }
-void PlayerAudio::setVolume(float volume)
-{
-    lastVolume = volume;
-    updateGain();
-}
-void PlayerAudio::setCrossfadeGain(float gain)
-{
-    crossfadeGain = gain;
-    updateGain();
-}
+void PlayerAudio::start() { transportSource->start(); }
+void PlayerAudio::stop() { transportSource->stop(); }
+void PlayerAudio::restart() { transportSource->setPosition(0.0); transportSource->start(); }
+void PlayerAudio::setPosition(double position) { transportSource->setPosition(position); }
+double PlayerAudio::getLenght() { return transportSource->getLengthInSeconds(); }
 void PlayerAudio::setLooping(bool shouldLoop) { looping = shouldLoop; }
 bool PlayerAudio::isLooping() const { return looping; }
-bool PlayerAudio::isPlaying() const { return transportSource.isPlaying(); }
-void PlayerAudio::skipForward(double seconds) { transportSource.setPosition(std::min(transportSource.getCurrentPosition() + seconds, transportSource.getLengthInSeconds())); }
-void PlayerAudio::skipBackward(double seconds) { transportSource.setPosition(std::max(transportSource.getCurrentPosition() - seconds, 0.0)); }
-void PlayerAudio::toggleMute()
-{
-    muted = !muted;
-    updateGain();
-}
-bool PlayerAudio::isMuted() const { return muted; }
-double PlayerAudio::getCurrentPosition() const { return transportSource.getCurrentPosition(); }
+bool PlayerAudio::isPlaying() const { return transportSource->isPlaying(); }
 
 void PlayerAudio::setSpeed(double newSpeed)
 {
@@ -102,27 +82,38 @@ void PlayerAudio::setSpeed(double newSpeed)
         resamplerSource->setResamplingRatio(playbackSpeed);
 }
 
+double PlayerAudio::getCurrentPosition() const
+{
+    return transportSource->getCurrentPosition();
+}
+
 void PlayerAudio::setLoopPoints(double startTime, double endTime)
 {
     abLoopStart = startTime;
     abLoopEnd = endTime;
-    abLoopEngaged = (abLoopEnd > abLoopStart);
+    abLoopEngaged = (abLoopStart >= 0.0 && abLoopEnd > abLoopStart);
 }
 
 void PlayerAudio::clearLoopPoints()
 {
-    abLoopEngaged = false;
     abLoopStart = 0.0;
     abLoopEnd = -1.0;
+    abLoopEngaged = false;
+}
+
+void PlayerAudio::setVolume(float volume)
+{
+    userVolume = volume;
+    transportSource->setGain(userVolume * crossfadeGain);
+}
+
+void PlayerAudio::setCrossfadeGain(float gain)
+{
+    crossfadeGain = gain;
+    transportSource->setGain(userVolume * crossfadeGain);
 }
 
 juce::AudioSource* PlayerAudio::getAudioSource()
 {
     return resamplerSource.get();
-}
-
-void PlayerAudio::updateGain()
-{
-    auto finalGain = muted ? 0.0f : lastVolume * crossfadeGain;
-    transportSource.setGain(finalGain);
 }

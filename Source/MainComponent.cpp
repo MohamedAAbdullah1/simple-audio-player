@@ -4,10 +4,9 @@ MainComponent::MainComponent()
 {
     gui1.onLoadFile = [this]() { handleLoadFile1(); };
     gui1.onRestart = [this]() { handleRestart1(); };
-    gui1.onStop = [this]() { handleStop1(); };
-    gui1.onStart = [this]() { handleStart1(); };
-    gui1.onGostart = [this]() { handleGostart1(); };
-    gui1.onGoend = [this]() { handleGoend1(); };
+    gui1.onPlayStopClicked = [this]() { handlePlayStop1(); };
+    gui1.onSkipBackward = [this]() { handleSkipBackward1(); };
+    gui1.onSkipForward = [this]() { handleSkipForward1(); };
     gui1.onLoopToggled = [this](bool loop) { handleLoopToggled1(loop); };
     gui1.onVolumeChanged = [this](float vol) { handleVolumeChanged1(vol); };
     gui1.onSpeedChanged = [this](double speed) { audioPlayer1.setSpeed(speed); };
@@ -18,10 +17,9 @@ MainComponent::MainComponent()
 
     gui2.onLoadFile = [this]() { handleLoadFile2(); };
     gui2.onRestart = [this]() { handleRestart2(); };
-    gui2.onStop = [this]() { handleStop2(); };
-    gui2.onStart = [this]() { handleStart2(); };
-    gui2.onGostart = [this]() { handleGostart2(); };
-    gui2.onGoend = [this]() { handleGoend2(); };
+    gui2.onPlayStopClicked = [this]() { handlePlayStop2(); };
+    gui2.onSkipBackward = [this]() { handleSkipBackward2(); };
+    gui2.onSkipForward = [this]() { handleSkipForward2(); };
     gui2.onLoopToggled = [this](bool loop) { handleLoopToggled2(loop); };
     gui2.onVolumeChanged = [this](float vol) { handleVolumeChanged2(vol); };
     gui2.onSpeedChanged = [this](double speed) { audioPlayer2.setSpeed(speed); };
@@ -36,22 +34,33 @@ MainComponent::MainComponent()
     addAndMakeVisible(gui1);
     addAndMakeVisible(gui2);
 
+    gui1.setLookAndFeel(&globalLookAndFeel);
+    gui2.setLookAndFeel(&globalLookAndFeel);
+
     addAndMakeVisible(crossfader);
     crossfader.setRange(0.0, 1.0);
     crossfader.setValue(0.5);
     crossfader.addListener(this);
+    crossfader.setSliderStyle(juce::Slider::LinearHorizontal);
+    crossfader.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
 
     addAndMakeVisible(crossfaderLabel);
     crossfaderLabel.setText("Crossfader", juce::dontSendNotification);
-    crossfaderLabel.attachToComponent(&crossfader, true);
+    crossfaderLabel.setJustificationType(juce::Justification::centred);
 
-    setSize(800, 650);
+    crossfader.setLookAndFeel(&globalLookAndFeel);
+
+
+    setSize(1000, 500);
     setAudioChannels(0, 2);
     startTimerHz(30);
 }
 
 MainComponent::~MainComponent()
 {
+    crossfader.setLookAndFeel(nullptr);
+    gui1.setLookAndFeel(nullptr);
+    gui2.setLookAndFeel(nullptr);
     shutdownAudio();
 }
 
@@ -81,27 +90,28 @@ void MainComponent::releaseResources()
 
 void MainComponent::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::black);
+    g.fillAll(juce::Colour(0xff222222));
 }
 
 void MainComponent::resized()
 {
-    int crossfaderHeight = 50;
-    int trackHeight = (getHeight() - crossfaderHeight) / 2;
+    juce::Rectangle<int> bounds = getLocalBounds();
 
-    gui1.setBounds(0, 0, getWidth(), trackHeight);
-    gui2.setBounds(0, trackHeight, getWidth(), trackHeight);
+    juce::Rectangle<int> crossfaderArea = bounds.removeFromBottom(60);
 
-    crossfader.setBounds(110, getHeight() - 40, getWidth() - 130, 30);
+    gui1.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2).reduced(10));
+    gui2.setBounds(bounds.reduced(10));
+
+    crossfaderLabel.setBounds(crossfaderArea.removeFromTop(20));
+    crossfader.setBounds(crossfaderArea.reduced(20, 0));
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &crossfader)
     {
-        double val = crossfader.getValue(); // 0.0 (Left/Track1) to 1.0 (Right/Track2)
+        double val = crossfader.getValue();
 
-        // Use "Constant Power" fade for smooth crossfade
         double gain1 = std::cos(val * juce::MathConstants<double>::halfPi);
         double gain2 = std::sin(val * juce::MathConstants<double>::halfPi);
 
@@ -114,9 +124,11 @@ void MainComponent::timerCallback()
 {
     gui1.setPositionSliderValue(audioPlayer1.getCurrentPosition());
     gui2.setPositionSliderValue(audioPlayer2.getCurrentPosition());
+
+    gui1.setPlayStopButtonState(audioPlayer1.isPlaying());
+    gui2.setPlayStopButtonState(audioPlayer2.isPlaying());
 }
 
-// --- Track 1 Handlers ---
 void MainComponent::handleLoadFile1()
 {
     fileChooser1 = std::make_unique<juce::FileChooser>("Select audio file for Track 1...", juce::File{}, "*.wav;*.mp3;*.flac;*.ogg");
@@ -133,10 +145,15 @@ void MainComponent::handleLoadFile1()
         });
 }
 void MainComponent::handleRestart1() { audioPlayer1.restart(); }
-void MainComponent::handleStart1() { audioPlayer1.start(); }
-void MainComponent::handleStop1() { audioPlayer1.stop(); }
-void MainComponent::handleGostart1() { audioPlayer1.setPosition(0.0); }
-void MainComponent::handleGoend1() { audioPlayer1.setPosition(audioPlayer1.getLenght() - 3.0f); }
+void MainComponent::handlePlayStop1()
+{
+    if (audioPlayer1.isPlaying())
+        audioPlayer1.stop();
+    else
+        audioPlayer1.start();
+}
+void MainComponent::handleSkipBackward1() { audioPlayer1.setPosition(std::max(0.0, audioPlayer1.getCurrentPosition() - 10.0)); }
+void MainComponent::handleSkipForward1() { audioPlayer1.setPosition(std::min(audioPlayer1.getLenght(), audioPlayer1.getCurrentPosition() + 10.0)); }
 void MainComponent::handleLoopToggled1(bool isLooping) { audioPlayer1.setLooping(isLooping); }
 void MainComponent::handleVolumeChanged1(float volume) { audioPlayer1.setVolume(volume); }
 void MainComponent::handlePositionChanged1(double newPosition) { audioPlayer1.setPosition(newPosition); }
@@ -162,7 +179,6 @@ void MainComponent::handleClearAB1()
 }
 void MainComponent::updateABButtons1() { gui1.updateABButtonColors(loopStartTime1 > 0.0, loopEndTime1 > 0.0); }
 
-// --- Track 2 Handlers ---
 void MainComponent::handleLoadFile2()
 {
     fileChooser2 = std::make_unique<juce::FileChooser>("Select audio file for Track 2...", juce::File{}, "*.wav;*.mp3;*.flac;*.ogg");
@@ -179,10 +195,15 @@ void MainComponent::handleLoadFile2()
         });
 }
 void MainComponent::handleRestart2() { audioPlayer2.restart(); }
-void MainComponent::handleStart2() { audioPlayer2.start(); }
-void MainComponent::handleStop2() { audioPlayer2.stop(); }
-void MainComponent::handleGostart2() { audioPlayer2.setPosition(0.0); }
-void MainComponent::handleGoend2() { audioPlayer2.setPosition(audioPlayer2.getLenght() - 3.0f); }
+void MainComponent::handlePlayStop2()
+{
+    if (audioPlayer2.isPlaying())
+        audioPlayer2.stop();
+    else
+        audioPlayer2.start();
+}
+void MainComponent::handleSkipBackward2() { audioPlayer2.setPosition(std::max(0.0, audioPlayer2.getCurrentPosition() - 10.0)); }
+void MainComponent::handleSkipForward2() { audioPlayer2.setPosition(std::min(audioPlayer2.getLenght(), audioPlayer2.getCurrentPosition() + 10.0)); }
 void MainComponent::handleLoopToggled2(bool isLooping) { audioPlayer2.setLooping(isLooping); }
 void MainComponent::handleVolumeChanged2(float volume) { audioPlayer2.setVolume(volume); }
 void MainComponent::handlePositionChanged2(double newPosition) { audioPlayer2.setPosition(newPosition); }

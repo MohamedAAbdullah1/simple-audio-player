@@ -20,45 +20,39 @@ public:
     void start();
     void stop();
     void restart();
-    void setPosition(float position);
-    float getLenght();
+    void setPosition(double position);
+    double getLenght();
     void setVolume(float volume);
-    void setCrossfadeGain(float gain);
-    void skipForward(double seconds);
-    void skipBackward(double seconds);
     void setLooping(bool shouldLoop);
     bool isLooping() const;
     bool isPlaying() const;
-    double getCurrentPosition() const;
-
-    void toggleMute();
-    bool isMuted() const;
 
     void setSpeed(double newSpeed);
     double getSpeed() const { return playbackSpeed; }
 
+    double getCurrentPosition() const;
+
     void setLoopPoints(double startTime, double endTime);
     void clearLoopPoints();
 
+    void setCrossfadeGain(float gain);
     juce::AudioSource* getAudioSource();
 
 private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-    juce::AudioTransportSource transportSource;
+    std::unique_ptr<juce::AudioTransportSource> transportSource;
     std::unique_ptr<juce::ResamplingAudioSource> resamplerSource;
 
     bool looping = false;
-    bool muted = false;
-    float lastVolume = 0.8f;
-    float crossfadeGain = 1.0f;
-    void updateGain();
-
     double playbackSpeed = 1.0;
 
     double abLoopStart = 0.0;
     double abLoopEnd = -1.0;
     bool abLoopEngaged = false;
+
+    float userVolume = 0.5f;
+    float crossfadeGain = 1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };
