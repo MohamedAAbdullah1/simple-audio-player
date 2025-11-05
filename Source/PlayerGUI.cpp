@@ -81,18 +81,16 @@ void PlayerGUI::resized()
 {
     juce::Grid grid;
     using Track = juce::Grid::TrackInfo;
-    using Fr = juce::Grid::Fr; // Use fractional widths
+    using Fr = juce::Grid::Fr;
     using Px = juce::Grid::Px;
 
-    // 5 صفوف
     grid.templateRows.add(Track(Px(40)));
     grid.templateRows.add(Track(Px(40)));
     grid.templateRows.add(Track(Px(40)));
     grid.templateRows.add(Track(Px(40)));
     grid.templateRows.add(Track(Px(40)));
 
-    // 8 أعمدة - نستخدم أرقام صحيحة لـ Fr
-    grid.templateColumns.add(Track(Fr(2))); // للعنوان - نعطيه مساحة أكبر
+    grid.templateColumns.add(Track(Fr(2)));
     grid.templateColumns.add(Track(Fr(1)));
     grid.templateColumns.add(Track(Fr(1)));
     grid.templateColumns.add(Track(Fr(1)));
@@ -101,43 +99,32 @@ void PlayerGUI::resized()
     grid.templateColumns.add(Track(Fr(1)));
     grid.templateColumns.add(Track(Fr(1)));
 
-    grid.setGap(Px(5)); // تقليل الفجوة لتناسب
+    grid.setGap(Px(5));
 
-    // يجب استخدام grid.items.add() لكل عنصر
+    grid.items.add(juce::GridItem(trackLabel).withColumn({ 1, 1 }));
+    grid.items.add(juce::GridItem(loadButton).withColumn({ 2, 2 }));
+    grid.items.add(juce::GridItem(restartButton).withColumn({ 3, 3 }));
+    grid.items.add(juce::GridItem(startButton).withColumn({ 4, 4 }));
+    grid.items.add(juce::GridItem(stopButton).withColumn({ 5, 5 }));
+    grid.items.add(juce::GridItem(loopButton).withColumn({ 6, 6 }));
+    grid.items.add(juce::GridItem(setAButton).withColumn({ 7, 7 }));
+    grid.items.add(juce::GridItem(setBButton).withColumn({ 8, 8 }));
 
-    // الصف 1
-    grid.items.add(juce::GridItem(trackLabel).withColumn({ 1, 1 })); // العمود 1
-    grid.items.add(juce::GridItem(loadButton).withColumn({ 2, 2 })); // العمود 2
-    grid.items.add(juce::GridItem(restartButton).withColumn({ 3, 3 })); // العمود 3
-    grid.items.add(juce::GridItem(startButton).withColumn({ 4, 4 })); // العمود 4
-    grid.items.add(juce::GridItem(stopButton).withColumn({ 5, 5 })); // العمود 5
-    grid.items.add(juce::GridItem(loopButton).withColumn({ 6, 6 })); // العمود 6
-    grid.items.add(juce::GridItem(setAButton).withColumn({ 7, 7 })); // العمود 7
-    grid.items.add(juce::GridItem(setBButton).withColumn({ 8, 8 })); // العمود 8
+    grid.items.add(juce::GridItem(volumeSlider).withColumn({ 1, 6 }).withAlignSelf(juce::GridItem::AlignSelf::stretch));
+    grid.items.add(juce::GridItem(clearABButton).withColumn({ 7, 7 }));
+    grid.items.add(juce::GridItem(muteButton).withColumn({ 8, 8 }));
 
-    // الصف 2
-    // volumeLabel ملتصق, لذلك نضع الشريط فقط
-    grid.items.add(juce::GridItem(volumeSlider).withColumn({ 1, 6 }).withAlignSelf(juce::GridItem::AlignSelf::stretch)); // Span 6
-    grid.items.add(juce::GridItem(clearABButton).withColumn({ 7, 7 })); // العمود 7
-    grid.items.add(juce::GridItem(muteButton).withColumn({ 8, 8 })); // العمود 8
+    grid.items.add(juce::GridItem(speedSlider).withColumn({ 1, 6 }).withAlignSelf(juce::GridItem::AlignSelf::stretch));
+    grid.items.add(juce::GridItem(backwardButton).withColumn({ 7, 7 }));
+    grid.items.add(juce::GridItem(forwardButton).withColumn({ 8, 8 }));
 
-    // الصف 3
-    // speedLabel ملتصق
-    grid.items.add(juce::GridItem(speedSlider).withColumn({ 1, 6 }).withAlignSelf(juce::GridItem::AlignSelf::stretch)); // Span 6
-    grid.items.add(juce::GridItem(backwardButton).withColumn({ 7, 7 })); // العمود 7
-    grid.items.add(juce::GridItem(forwardButton).withColumn({ 8, 8 })); // العمود 8
+    grid.items.add(juce::GridItem(currentTimeLabel).withColumn({ 1, 1 }).withAlignSelf(juce::GridItem::AlignSelf::center));
+    grid.items.add(juce::GridItem(positionSlider).withColumn({ 2, 7 }).withAlignSelf(juce::GridItem::AlignSelf::stretch));
+    grid.items.add(juce::GridItem(totalTimeLabel).withColumn({ 8, 8 }).withAlignSelf(juce::GridItem::AlignSelf::center));
 
-    // الصف 4
-    grid.items.add(juce::GridItem(currentTimeLabel).withColumn({ 1, 1 }).withAlignSelf(juce::GridItem::AlignSelf::center)); // Span 1
-    grid.items.add(juce::GridItem(positionSlider).withColumn({ 2, 7 }).withAlignSelf(juce::GridItem::AlignSelf::stretch));   // Span 6 (cols 2-7)
-    grid.items.add(juce::GridItem(totalTimeLabel).withColumn({ 8, 8 }).withAlignSelf(juce::GridItem::AlignSelf::center));   // Span 1 (col 8)
+    grid.items.add(juce::GridItem(gotostartButton).withColumn({ 1, 2 }));
+    grid.items.add(juce::GridItem(gotoendButton).withColumn({ 3, 4 }));
 
-    // الصف 5 - نضع فيه الأزرار المتبقية
-    grid.items.add(juce::GridItem(gotostartButton).withColumn({ 1, 2 })); // Span 2
-    grid.items.add(juce::GridItem(gotoendButton).withColumn({ 3, 4 })); // Span 2
-    // ترك الباقي فارغ
-
-    // يجب إضافة بعض الهوامش حول الشبكة
     juce::Rectangle<int> gridBounds = getLocalBounds().reduced(10);
     grid.performLayout(gridBounds);
 }
@@ -154,7 +141,6 @@ void PlayerGUI::buttonClicked(juce::Button* button)
     else if (button == &setAButton && onSetA) onSetA();
     else if (button == &setBButton && onSetB) onSetB();
     else if (button == &clearABButton && onClearAB) onClearAB();
-    // forward, backward, mute يتم التعامل معها في MainComponent في التصميم الأصلي
 }
 
 void PlayerGUI::sliderValueChanged(juce::Slider* slider)
