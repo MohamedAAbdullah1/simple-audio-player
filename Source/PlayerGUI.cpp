@@ -1,4 +1,148 @@
 #include "PlayerGUI.h"
+#include <juce_audio_formats/juce_audio_formats.h>
+#include <juce_audio_utils/juce_audio_utils.h> 
+#include <memory>
+
+CustomLookAndFeel::CustomLookAndFeel()
+{
+    setColour(juce::Slider::thumbColourId, juce::Colour(0xff007aff));
+    setColour(juce::Slider::trackColourId, juce::Colour(0xff444444));
+    setColour(juce::Slider::backgroundColourId, juce::Colour(0xff444444));
+
+    setColour(juce::TextButton::buttonColourId, juce::Colour(0xff444444));
+    setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff007aff));
+    setColour(juce::TextButton::textColourOffId, juce::Colours::lightgrey);
+    setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+
+    setColour(juce::ToggleButton::textColourId, juce::Colours::lightgrey);
+    setColour(juce::ToggleButton::tickDisabledColourId, juce::Colours::lightgrey);
+    setColour(juce::ToggleButton::tickColourId, juce::Colour(0xff007aff));
+}
+
+void CustomLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& button, const juce::Colour& backgroundColour,
+    bool, bool isButtonDown)
+{
+    (void)backgroundColour;
+    auto bounds = button.getLocalBounds().toFloat();
+    auto cornerSize = 6.0f;
+
+    juce::Colour baseColour = button.findColour(juce::TextButton::buttonColourId);
+
+    if (isButtonDown)
+        baseColour = baseColour.darker(0.3f);
+
+    g.setColour(baseColour);
+    g.fillRoundedRectangle(bounds, cornerSize);
+
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
+}
+
+void CustomLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& button, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+{
+    (void)shouldDrawButtonAsHighlighted;
+
+    auto bounds = button.getLocalBounds().toFloat();
+    auto cornerSize = 6.0f;
+
+    juce::Colour baseColour = findColour(juce::TextButton::buttonColourId);
+    if (button.getToggleState())
+        baseColour = findColour(juce::TextButton::buttonOnColourId);
+    if (shouldDrawButtonAsDown)
+        baseColour = baseColour.darker(0.3f);
+
+    g.setColour(baseColour);
+    g.fillRoundedRectangle(bounds.reduced(2.0f), cornerSize);
+
+    g.setColour(button.findColour(juce::ToggleButton::textColourId));
+    g.setFont(14.0f);
+    g.drawText(button.getButtonText(), bounds, juce::Justification::centred, 1.0f);
+}
+
+void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height,
+    float sliderPos, float minSliderPos, float maxSliderPos,
+    const juce::Slider::SliderStyle style, juce::Slider& slider)
+{
+    (void)minSliderPos;
+    (void)maxSliderPos;
+
+    auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat();
+    auto cornerSize = 4.0f;
+
+    g.setColour(slider.findColour(juce::Slider::backgroundColourId));
+    g.fillRoundedRectangle(bounds, cornerSize);
+
+    g.setColour(slider.findColour(juce::Slider::trackColourId));
+    if (style == juce::Slider::LinearHorizontal)
+    {
+        g.fillRoundedRectangle(bounds.withWidth(sliderPos - (float)x), cornerSize);
+    }
+    else if (style == juce::Slider::LinearVertical)
+    {
+        g.fillRoundedRectangle(bounds.withTop(sliderPos), cornerSize);
+    }
+
+    g.setColour(slider.findColour(juce::Slider::thumbColourId));
+    if (style == juce::Slider::LinearHorizontal)
+    {
+        g.fillRect(juce::Rectangle<float>(sliderPos - 3.0f, (float)y, 6.0f, (float)height));
+    }
+    else if (style == juce::Slider::LinearVertical)
+    {
+        g.fillRect(juce::Rectangle<float>((float)x, sliderPos - 3.0f, (float)width, 6.0f));
+    }
+}
+
+class WaveformDisplay : public juce::Component,
+    private juce::ChangeListener
+{
+public:
+    WaveformDisplay()
+        : cache(5), thumbnail(512, formatManager, cache)
+    {
+        formatManager.registerBasicFormats();
+        thumbnail.addChangeListener(this);
+    }
+
+    void loadFile(const juce::File& file)
+    {
+        thumbnail.clear();
+        if (file.existsAsFile())
+        {
+            thumbnail.setSource(new juce::FileInputSource(file));
+        }
+        repaint();
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        g.fillAll(juce::Colour(0xff1b1b1b));
+
+        auto area = getLocalBounds().toFloat().reduced(4.0f);
+        g.setColour(juce::Colours::black);
+        g.fillRoundedRectangle(area, 4.0f);
+
+        if (thumbnail.getNumChannels() == 0)
+        {
+            g.setColour(juce::Colours::grey);
+            g.drawFittedText("Waveform (no file)", getLocalBounds(), juce::Justification::centred, 1);
+        }
+        else
+        {
+            g.setColour(juce::Colour(0xff007aff)); 
+            thumbnail.drawChannel(g, getLocalBounds(), 0.0, thumbnail.getTotalLength(), 0, 1.0f);
+        }
+    }
+
+private:
+    void changeListenerCallback(juce::ChangeBroadcaster*) override { repaint(); }
+
+    juce::AudioFormatManager formatManager;
+    juce::AudioThumbnailCache cache;
+    juce::AudioThumbnail thumbnail;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WaveformDisplay)
+};
 
 static juce::String formatTime(double seconds)
 {
@@ -63,7 +207,21 @@ PlayerGUI::PlayerGUI()
     trackLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(trackLabel);
 
+    addAndMakeVisible(addMarkerButton);
+    addMarkerButton.addListener(this);
+    addAndMakeVisible(markerList);
+    markerList.addItem("No markers", 1);
+    markerList.onChange = [this]() {
+        if (onSelectMarker)
+            onSelectMarker(markerList.getText());
+        };
+
     updateABButtonColors(false, false);
+
+    waveformDisplay = std::make_unique<WaveformDisplay>();
+    addAndMakeVisible(waveformDisplay.get());
+
+    setSize(400, 200);
 }
 
 PlayerGUI::~PlayerGUI()
@@ -80,62 +238,78 @@ void PlayerGUI::paint(juce::Graphics& g)
 
 void PlayerGUI::resized()
 {
-    using FlexItem = juce::FlexItem;
-    using FlexBox = juce::FlexBox;
+    const int margin = 8;
+    const int rowMargin = 5;
+    const int sliderWidth = 45;        
+    const int buttonHeight = 70;      
+    const int markerAreaWidth = 60;
+    const int waveformHeight = 60;
+    const int topHeight = 30;
 
-    juce::Rectangle<int> bounds = getLocalBounds().reduced(15);
+    const int sliderControlHeight = 100;
 
-    FlexBox mainFlexBox;
-    mainFlexBox.flexDirection = FlexBox::Direction::column;
+    const int markerButtonHeight = 25;
+    const int markerListHeight = 100;
 
-    FlexBox topBox;
-    topBox.flexDirection = FlexBox::Direction::row;
-    topBox.items.add(FlexItem(trackLabel).withFlex(1.0f));
-    topBox.items.add(FlexItem(loadButton).withWidth(100).withHeight(30));
-    mainFlexBox.items.add(FlexItem(topBox).withHeight(30).withMargin(juce::FlexItem::Margin(0, 0, 10, 0)));
+    juce::Rectangle<int> area = getLocalBounds().reduced(margin);
 
-    FlexBox sliderBox;
-    sliderBox.flexDirection = FlexBox::Direction::row;
-    sliderBox.alignItems = FlexBox::AlignItems::stretch;
+    juce::Rectangle<int> markerArea = area.removeFromRight(markerAreaWidth);
 
-    sliderBox.items.add(FlexItem(volumeSlider).withWidth(30).withMargin(juce::FlexItem::Margin(0, 10, 0, 0)));
+    addMarkerButton.setBounds(markerArea.getX() + rowMargin, markerArea.getY(), markerAreaWidth - (2 * rowMargin), markerButtonHeight);
+    markerList.setBounds(markerArea.getX() + rowMargin, markerArea.getY() + markerButtonHeight + rowMargin, markerAreaWidth - (2 * rowMargin), markerListHeight);
 
-    FlexBox positionFlex;
-    positionFlex.flexDirection = FlexBox::Direction::column;
-    positionFlex.items.add(FlexItem(positionSlider).withHeight(20));
-    FlexBox timeBox;
-    timeBox.items.add(FlexItem(currentTimeLabel).withFlex(1.0f));
-    timeBox.items.add(FlexItem(totalTimeLabel).withFlex(1.0f));
-    positionFlex.items.add(FlexItem(timeBox).withHeight(20));
+    juce::Rectangle<int> topRow = area.removeFromTop(topHeight);
 
-    sliderBox.items.add(FlexItem(positionFlex).withFlex(1.0f));
+    loadButton.setBounds(topRow.removeFromRight(80).reduced(0, 2));
+    trackLabel.setBounds(topRow.reduced(0, 2));
 
-    sliderBox.items.add(FlexItem(speedSlider).withWidth(30).withMargin(juce::FlexItem::Margin(0, 0, 0, 10)));
+    juce::Rectangle<int> sliderRow = area.removeFromTop(sliderControlHeight);
 
-    mainFlexBox.items.add(FlexItem(sliderBox).withFlex(1.0f).withMargin(juce::FlexItem::Margin(0, 0, 10, 0)));
+    volumeSlider.setBounds(sliderRow.removeFromLeft(sliderWidth + rowMargin).reduced(rowMargin, 0));
 
-    FlexBox buttonGrid;
-    buttonGrid.flexWrap = FlexBox::Wrap::wrap;
-    buttonGrid.justifyContent = FlexBox::JustifyContent::flexStart;
-    buttonGrid.alignContent = FlexBox::AlignContent::stretch;
+    juce::Rectangle<int> speedSliderArea = sliderRow.removeFromRight(sliderWidth + rowMargin);
+    speedSlider.setBounds(speedSliderArea.reduced(rowMargin, 0));
 
-    buttonGrid.items.add(FlexItem(playStopButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
-    buttonGrid.items.add(FlexItem(restartButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
-    buttonGrid.items.add(FlexItem(loopButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
+    juce::Rectangle<int> positionArea = sliderRow;
+    positionSlider.setBounds(positionArea.getX(), positionArea.getY() + 10, positionArea.getWidth(), 20);
 
-    buttonGrid.items.add(FlexItem(setAButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
-    buttonGrid.items.add(FlexItem(setBButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
-    buttonGrid.items.add(FlexItem(clearABButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
-    buttonGrid.items.add(FlexItem(muteButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
+    currentTimeLabel.setBounds(positionArea.getX(), positionArea.getY() + 35, positionArea.getWidth() / 2, 20);
+    totalTimeLabel.setBounds(positionArea.getX() + positionArea.getWidth() / 2, positionArea.getY() + 35, positionArea.getWidth() / 2, 20);
 
-    buttonGrid.items.add(FlexItem(backwardButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
-    buttonGrid.items.add(FlexItem(forwardButton).withFlex(1.0f).withMinHeight(30).withMargin(2));
 
-    mainFlexBox.items.add(FlexItem(buttonGrid).withMinHeight(100));
+    int waveformY = positionArea.getY() + 35 + 20 + 2;
 
-    mainFlexBox.performLayout(bounds);
+    if (waveformDisplay.get() != nullptr)
+    {
+        waveformDisplay->setBounds(
+            positionArea.getX(),
+            waveformY,
+            positionArea.getWidth(),
+            waveformHeight);
+    }
+
+    area.removeFromTop(waveformY - area.getY() + waveformHeight + rowMargin);
+
+    juce::Rectangle<int> buttonGridArea = area.reduced(5);
+    int numButtonsInRow = 9;
+
+    int buttonWidth = (buttonGridArea.getWidth() - ((numButtonsInRow - 1) * rowMargin)) / numButtonsInRow;
+
+    int x = buttonGridArea.getX();
+    int y = buttonGridArea.getY();
+
+    playStopButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    restartButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    loopButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    muteButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+
+    setAButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    setBButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    clearABButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+
+    backwardButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    forwardButton.setBounds(x, y, buttonWidth, buttonHeight);
 }
-
 
 void PlayerGUI::buttonClicked(juce::Button* button)
 {
@@ -153,7 +327,11 @@ void PlayerGUI::buttonClicked(juce::Button* button)
         bool isNowMuted = !muteButton.getToggleState();
         muteButton.setToggleState(isNowMuted, juce::dontSendNotification);
         muteButton.setButtonText(isNowMuted ? "Unmute" : "Mute");
-        if(onVolumeChanged) onVolumeChanged(isNowMuted ? 0.0f : getCurrentVolume());
+        if (onVolumeChanged) onVolumeChanged(isNowMuted ? 0.0f : getCurrentVolume());
+    }
+    else if (button == &addMarkerButton && onAddMarker)
+    {
+        onAddMarker();
     }
 }
 
@@ -203,4 +381,27 @@ void PlayerGUI::setPlayStopButtonState(bool isPlaying)
     playStopButton.setButtonText(isPlaying ? "Stop" : "Play");
     playStopButton.setColour(juce::TextButton::buttonColourId, isPlaying ? findColour(juce::TextButton::buttonOnColourId) : findColour(juce::TextButton::buttonColourId));
     playStopButton.repaint();
+}
+
+void PlayerGUI::updateMarkerList(const juce::StringArray& list)
+{
+    markerList.clear();
+    if (list.size() == 0)
+    {
+        markerList.addItem("No markers", 1);
+    }
+    else
+    {
+        int id = 1;
+        for (auto& name : list)
+        {
+            markerList.addItem(name, id++);
+        }
+    }
+}
+
+void PlayerGUI::loadWaveform(const juce::File& file)
+{
+    if (waveformDisplay)
+        waveformDisplay->loadFile(file);
 }
