@@ -14,6 +14,10 @@ MainComponent::MainComponent()
     gui1.onSetA = [this]() { handleSetA1(); };
     gui1.onSetB = [this]() { handleSetB1(); };
     gui1.onClearAB = [this]() { handleClearAB1(); };
+    gui1.onStartButton = [this]() {handleStartButton1();};
+    gui1.onEndButton = [this](){handleEndButton1();};
+    gui1.onSelected = [this](juce::File f){return slectedFile1(f);};
+    gui1.onDelete = [this](){ deleteSelectedFiles1();};
 
     gui2.onLoadFile = [this]() { handleLoadFile2(); };
     gui2.onRestart = [this]() { handleRestart2(); };
@@ -27,6 +31,10 @@ MainComponent::MainComponent()
     gui2.onSetA = [this]() { handleSetA2(); };
     gui2.onSetB = [this]() { handleSetB2(); };
     gui2.onClearAB = [this]() { handleClearAB2(); };
+    gui2.onStartButton = [this]() {handleStartButton2();};
+    gui2.onEndButton = [this](){handleEndButton2();};
+    gui2.onSelected = [this](juce::File f){return slectedFile2(f);};
+    gui2.onDelete = [this](){deleteSelectedFiles2();};
 
     gui1.setTrackName("Track 1");
     gui2.setTrackName("Track 2");
@@ -75,8 +83,9 @@ MainComponent::MainComponent()
     setSize(1000, 500);
     setAudioChannels(0, 2);
     startTimerHz(30);
-
     loadSessionFromDisk();
+
+
 }
 
 MainComponent::~MainComponent()
@@ -113,6 +122,8 @@ void MainComponent::releaseResources()
     audioPlayer2.releaseResources();
 }
 
+
+
 void MainComponent::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff222222));
@@ -125,10 +136,15 @@ void MainComponent::resized()
     juce::Rectangle<int> crossfaderArea = bounds.removeFromBottom(60);
 
     gui1.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2).reduced(10));
+
+
     gui2.setBounds(bounds.reduced(10));
+
 
     crossfaderLabel.setBounds(crossfaderArea.removeFromTop(20));
     crossfader.setBounds(crossfaderArea.reduced(20, 0));
+
+
 }
 
 void MainComponent::sliderValueChanged(juce::Slider* slider)
@@ -154,23 +170,24 @@ void MainComponent::timerCallback()
     gui2.setPlayStopButtonState(audioPlayer2.isPlaying());
 }
 
+
 void MainComponent::handleLoadFile1()
 {
+    files1.clear();
+    duration_files1.clear();
     fileChooser1 = std::make_unique<juce::FileChooser>("Select audio file for Track 1...", juce::File{}, "*.wav;*.mp3;*.flac;*.ogg");
-    fileChooser1->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+    fileChooser1->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems    ,
         [this](const juce::FileChooser& fc)
         {
-            auto file = fc.getResult();
+           for( auto file : fc.getResults())
             if (file.existsAsFile())
             {
+                files1.push_back(file);
                 audioPlayer1.loadFile(file);
-                gui1.setPositionSliderRange(audioPlayer1.getLenght());
-                gui1.loadWaveform(file); 
-                handleClearAB1();
-
-                audioPlayer1.clearAllMarkers();
-                gui1.updateMarkerList(audioPlayer1.getMarkersList());
+                duration_files1.push_back(audioPlayer1.GetDuration());
             }
+            gui1.setFiles(files1);
+            gui1.setFiles_Duration(duration_files1);
         });
 }
 void MainComponent::handleRestart1()
@@ -214,23 +231,51 @@ void MainComponent::handleClearAB1()
 }
 void MainComponent::updateABButtons1() { gui1.updateABButtonColors(loopStartTime1 > 0.0, loopEndTime1 > 0.0); }
 
+void MainComponent::handleStartButton1() {
+    audioPlayer1.setPosition(0.0);
+}
+
+void MainComponent::handleEndButton1() {
+    audioPlayer1.setPosition(audioPlayer1.getLenght());
+}
+
+bool MainComponent::slectedFile1(juce::File file) {
+    if (file.existsAsFile())
+    {
+        audioPlayer1.loadFile(file);
+        gui1.setPositionSliderRange(audioPlayer2.getLenght());
+        gui1.loadWaveform(file);
+        handleClearAB2();
+        audioPlayer1.clearAllMarkers();
+        gui1.updateMarkerList(audioPlayer1.getMarkersList());
+        return true;
+    }
+    return false;
+}
+
+void MainComponent::deleteSelectedFiles1() {
+    audioPlayer1.Delete();
+}
+
+
+
 void MainComponent::handleLoadFile2()
 {
+    files2.clear();
+    duration_files2.clear();
     fileChooser2 = std::make_unique<juce::FileChooser>("Select audio file for Track 2...", juce::File{}, "*.wav;*.mp3;*.flac;*.ogg");
-    fileChooser2->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+    fileChooser2->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems    ,
         [this](const juce::FileChooser& fc)
         {
-            auto file = fc.getResult();
+            for(auto file : fc.getResults())
             if (file.existsAsFile())
             {
+                files2.push_back(file);
                 audioPlayer2.loadFile(file);
-                gui2.setPositionSliderRange(audioPlayer2.getLenght());
-                gui2.loadWaveform(file); 
-                handleClearAB2();
-
-                audioPlayer2.clearAllMarkers();
-                gui2.updateMarkerList(audioPlayer2.getMarkersList());
+                duration_files2.push_back(audioPlayer2.GetDuration());
             }
+            gui2.setFiles(files1);
+            gui2.setFiles_Duration(duration_files1);
         });
 }
 void MainComponent::handleRestart2()
@@ -273,6 +318,35 @@ void MainComponent::handleClearAB2()
     updateABButtons2();
 }
 void MainComponent::updateABButtons2() { gui2.updateABButtonColors(loopStartTime2 > 0.0, loopEndTime2 > 0.0); }
+
+void MainComponent::handleStartButton2() {
+    audioPlayer2.setPosition(0.0);
+}
+
+void MainComponent::handleEndButton2() {
+    audioPlayer2.setPosition(audioPlayer2.getLenght());
+}
+
+bool MainComponent::slectedFile2(juce::File file) {
+    if (file.existsAsFile())
+    {
+        files2.push_back(file);
+        audioPlayer2.loadFile(file);
+        duration_files2.push_back(audioPlayer1.GetDuration());
+        gui2.setPositionSliderRange(audioPlayer2.getLenght());
+        gui2.loadWaveform(file);
+        handleClearAB2();
+        audioPlayer2.clearAllMarkers();
+        gui2.updateMarkerList(audioPlayer2.getMarkersList());
+        return true;
+    }
+    return false;
+}
+
+void MainComponent::deleteSelectedFiles2() {
+    audioPlayer2.Delete();
+}
+
 
 void MainComponent::saveSessionToDisk()
 {

@@ -27,7 +27,9 @@ public:
     void setLooping(bool shouldLoop);
     bool isLooping() const;
     bool isPlaying() const;
-
+    juce::String GetDuration();
+    juce::String getPath() ;
+    juce::String getFileName();
     void setSpeed(double newSpeed);
     double getSpeed() const { return playbackSpeed; }
 
@@ -35,7 +37,7 @@ public:
 
     void setLoopPoints(double startTime, double endTime);
     void clearLoopPoints();
-
+    void Delete();
     void setCrossfadeGain(float gain);
     juce::AudioSource* getAudioSource();
 
@@ -58,6 +60,9 @@ private:
     bool looping = false;
     double playbackSpeed = 1.0;
 
+    juce::String filp;
+    juce::String filn;
+
     double abLoopStart = 0.0;
     double abLoopEnd = -1.0;
     bool abLoopEngaged = false;
@@ -67,6 +72,7 @@ private:
 
     juce::File currentFile;
     std::map<juce::String, double> markers;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerAudio)
 };

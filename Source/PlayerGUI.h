@@ -4,6 +4,8 @@
 
 class WaveformDisplay;
 
+
+
 class CustomLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
@@ -18,7 +20,8 @@ public:
 
 class PlayerGUI : public juce::Component,
     public juce::Button::Listener,
-    public juce::Slider::Listener
+    public juce::Slider::Listener,
+    public juce::TableListBoxModel
 {
 public:
     PlayerGUI();
@@ -36,6 +39,14 @@ public:
     void updateABButtonColors(bool aSet, bool bSet);
     void setTrackName(const juce::String& name);
     void setPlayStopButtonState(bool isPlaying);
+    void setFiles( std::vector<juce::File>& files);
+    void setFiles_Duration( std::vector<juce::String>& durations);
+    int getNumRows() override;
+    void paintRowBackground(juce::Graphics &g, int rowNumber, int weidth, int height, bool rowCliked) override;
+    void paintCell(juce::Graphics &g, int rowNumber, int columnId, int weidth, int height, bool rowClike) override;
+    void cellClicked(int rowNumber,int columnId,const juce::MouseEvent& mouse) override;
+    void metadata(juce::String path,juce::String name,juce::String time);
+
 
     std::function<void()> onAddMarker;
     std::function<void(const juce::String&)> onSelectMarker;
@@ -52,7 +63,10 @@ public:
     std::function<void()> onSetA;
     std::function<void()> onSetB;
     std::function<void()> onClearAB;
-
+    std::function<void()> onStartButton;
+    std::function<void()> onEndButton;
+    std::function<bool(juce::File)> onSelected;
+    std::function<void()> onDelete;
     void updateMarkerList(const juce::StringArray& list);
 
     void loadWaveform(const juce::File& file);
@@ -69,7 +83,8 @@ private:
     juce::TextButton forwardButton;
     juce::TextButton backwardButton;
     juce::TextButton muteButton;
-
+    juce::TextButton StartButton;
+    juce::TextButton EndButton;
     juce::Slider volumeSlider;
     juce::Slider speedSlider;
 
@@ -77,11 +92,19 @@ private:
     juce::Label currentTimeLabel;
     juce::Label totalTimeLabel;
     juce::Label trackLabel;
+    juce::Label filepath;
+    juce::Label time;
+    juce::Label name;
+
+
+    std::vector<juce::File>files;
+    std::vector<juce::String>duration_files;
 
     juce::TextButton addMarkerButton{ "Add Marker" };
     juce::ComboBox markerList;
 
     std::unique_ptr<WaveformDisplay> waveformDisplay;
 
+    juce::TableListBox list;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PlayerGUI)
 };
