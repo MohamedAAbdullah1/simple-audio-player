@@ -28,7 +28,7 @@ public:
     bool isLooping() const;
     bool isPlaying() const;
     juce::String GetDuration();
-    juce::String getPath() ;
+    juce::String getPath();
     juce::String getFileName();
     void setSpeed(double newSpeed);
     double getSpeed() const { return playbackSpeed; }
@@ -40,6 +40,13 @@ public:
     void Delete();
     void setCrossfadeGain(float gain);
     juce::AudioSource* getAudioSource();
+
+    // --- ADDED ---
+    // Public getters for the loop state, so MainComponent's timer can check them.
+    bool isAbLoopEngaged() const { return abLoopEngaged; }
+    double getAbLoopStart() const { return abLoopStart; }
+    double getAbLoopEnd() const { return abLoopEnd; }
+    // --- END ADDED ---
 
     void addMarker(const juce::String& name, double time);
     void goToMarker(const juce::String& name);
@@ -63,7 +70,10 @@ private:
     juce::String filp;
     juce::String filn;
 
-    double abLoopStart = 0.0;
+    // --- MODIFIED ---
+    // Use -1.0 as a clear "unset" state for the loop start.
+    double abLoopStart = -1.0;
+    // --- END MODIFIED ---
     double abLoopEnd = -1.0;
     bool abLoopEngaged = false;
 

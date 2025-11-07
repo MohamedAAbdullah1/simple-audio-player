@@ -14,10 +14,10 @@ MainComponent::MainComponent()
     gui1.onSetA = [this]() { handleSetA1(); };
     gui1.onSetB = [this]() { handleSetB1(); };
     gui1.onClearAB = [this]() { handleClearAB1(); };
-    gui1.onStartButton = [this]() {handleStartButton1();};
-    gui1.onEndButton = [this](){handleEndButton1();};
-    gui1.onSelected = [this](juce::File f){return slectedFile1(f);};
-    gui1.onDelete = [this](){ deleteSelectedFiles1();};
+    gui1.onStartButton = [this]() {handleStartButton1(); };
+    gui1.onEndButton = [this]() {handleEndButton1(); };
+    gui1.onSelected = [this](juce::File f) {return slectedFile1(f); };
+    gui1.onDelete = [this]() { deleteSelectedFiles1(); };
 
     gui2.onLoadFile = [this]() { handleLoadFile2(); };
     gui2.onRestart = [this]() { handleRestart2(); };
@@ -31,10 +31,10 @@ MainComponent::MainComponent()
     gui2.onSetA = [this]() { handleSetA2(); };
     gui2.onSetB = [this]() { handleSetB2(); };
     gui2.onClearAB = [this]() { handleClearAB2(); };
-    gui2.onStartButton = [this]() {handleStartButton2();};
-    gui2.onEndButton = [this](){handleEndButton2();};
-    gui2.onSelected = [this](juce::File f){return slectedFile2(f);};
-    gui2.onDelete = [this](){deleteSelectedFiles2();};
+    gui2.onStartButton = [this]() {handleStartButton2(); };
+    gui2.onEndButton = [this]() {handleEndButton2(); };
+    gui2.onSelected = [this](juce::File f) {return slectedFile2(f); };
+    gui2.onDelete = [this]() {deleteSelectedFiles2(); };
 
     gui1.setTrackName("Track 1");
     gui2.setTrackName("Track 2");
@@ -163,11 +163,39 @@ void MainComponent::sliderValueChanged(juce::Slider* slider)
 
 void MainComponent::timerCallback()
 {
-    gui1.setPositionSliderValue(audioPlayer1.getCurrentPosition());
-    gui2.setPositionSliderValue(audioPlayer2.getCurrentPosition());
+    // --- MODIFIED ---
+    // This is the correct place to handle looping logic.
 
+    // Player 1
+    double pos1 = audioPlayer1.getCurrentPosition();
+    gui1.setPositionSliderValue(pos1);
     gui1.setPlayStopButtonState(audioPlayer1.isPlaying());
+
+    // A-B Loop Logic for Player 1
+    if (audioPlayer1.isAbLoopEngaged())
+    {
+        // Check if the position has passed or reached the end point
+        if (pos1 >= audioPlayer1.getAbLoopEnd())
+        {
+            // Set position back to the start point
+            audioPlayer1.setPosition(audioPlayer1.getAbLoopStart());
+        }
+    }
+
+    // Player 2
+    double pos2 = audioPlayer2.getCurrentPosition();
+    gui2.setPositionSliderValue(pos2);
     gui2.setPlayStopButtonState(audioPlayer2.isPlaying());
+
+    // A-B Loop Logic for Player 2
+    if (audioPlayer2.isAbLoopEngaged())
+    {
+        if (pos2 >= audioPlayer2.getAbLoopEnd())
+        {
+            audioPlayer2.setPosition(audioPlayer2.getAbLoopStart());
+        }
+    }
+    // --- END MODIFIED ---
 }
 
 
@@ -176,16 +204,16 @@ void MainComponent::handleLoadFile1()
     files1.clear();
     duration_files1.clear();
     fileChooser1 = std::make_unique<juce::FileChooser>("Select audio file for Track 1...", juce::File{}, "*.wav;*.mp3;*.flac;*.ogg");
-    fileChooser1->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems    ,
+    fileChooser1->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems,
         [this](const juce::FileChooser& fc)
         {
-           for( auto file : fc.getResults())
-            if (file.existsAsFile())
-            {
-                files1.push_back(file);
-                audioPlayer1.loadFile(file);
-                duration_files1.push_back(audioPlayer1.GetDuration());
-            }
+            for (auto file : fc.getResults())
+                if (file.existsAsFile())
+                {
+                    files1.push_back(file);
+                    audioPlayer1.loadFile(file);
+                    duration_files1.push_back(audioPlayer1.GetDuration());
+                }
             gui1.setFiles(files1);
             gui1.setFiles_Duration(duration_files1);
         });
@@ -209,27 +237,58 @@ void MainComponent::handleSkipForward1() { audioPlayer1.setPosition(std::min(aud
 void MainComponent::handleLoopToggled1(bool isLooping) { audioPlayer1.setLooping(isLooping); }
 void MainComponent::handleVolumeChanged1(float volume) { audioPlayer1.setVolume(volume); }
 void MainComponent::handlePositionChanged1(double newPosition) { audioPlayer1.setPosition(newPosition); }
+
+// --- MODIFIED ---
+// Updated logic to use PlayerAudio's state instead of local variables
 void MainComponent::handleSetA1()
 {
-    loopStartTime1 = audioPlayer1.getCurrentPosition();
-    if (loopEndTime1 > 0 && loopStartTime1 > loopEndTime1) { loopEndTime1 = -1.0; }
-    audioPlayer1.setLoopPoints(loopStartTime1, loopEndTime1);
+    double loopStartTime = audioPlayer1.getCurrentPosition();
+    double loopEndTime = audioPlayer1.getAbLoopEnd(); // Get current end time (-1 if unset)
+
+    // If end time is set and new start is after it, reset end time
+    if (loopEndTime >= 0.0 && loopStartTime > loopEndTime)
+    {
+        loopEndTime = -1.0;
+    }
+    audioPlayer1.setLoopPoints(loopStartTime, loopEndTime);
     updateABButtons1();
 }
+
 void MainComponent::handleSetB1()
 {
-    loopEndTime1 = audioPlayer1.getCurrentPosition();
-    if (loopEndTime1 < loopStartTime1) { loopStartTime1 = 0.0; }
-    audioPlayer1.setLoopPoints(loopStartTime1, loopEndTime1);
+    double loopStartTime = audioPlayer1.getAbLoopStart(); // Get current start time (-1 if unset)
+    double loopEndTime = audioPlayer1.getCurrentPosition();
+
+    if (loopStartTime < 0.0)
+    {
+        loopStartTime = 0.0; // If start isn't set, set it to 0
+    }
+
+    // If new end is before start, reset start to 0 (matches original logic)
+    if (loopEndTime < loopStartTime)
+    {
+        loopStartTime = 0.0;
+    }
+    audioPlayer1.setLoopPoints(loopStartTime, loopEndTime);
     updateABButtons1();
 }
+
 void MainComponent::handleClearAB1()
 {
-    loopStartTime1 = 0.0; loopEndTime1 = -1.0;
-    audioPlayer1.clearLoopPoints();
+    audioPlayer1.clearLoopPoints(); // This now sets start/end to -1
     updateABButtons1();
 }
-void MainComponent::updateABButtons1() { gui1.updateABButtonColors(loopStartTime1 > 0.0, loopEndTime1 > 0.0); }
+
+void MainComponent::updateABButtons1()
+{
+    // A is "set" if start time is valid (>= 0)
+    // B is "set" if end time is valid (>= 0)
+    // The GUI will light up both buttons if both points are set.
+    bool aSet = audioPlayer1.getAbLoopStart() >= 0.0;
+    bool bSet = audioPlayer1.getAbLoopEnd() >= 0.0;
+    gui1.updateABButtonColors(aSet, bSet);
+}
+// --- END MODIFIED ---
 
 void MainComponent::handleStartButton1() {
     audioPlayer1.setPosition(0.0);
@@ -243,9 +302,9 @@ bool MainComponent::slectedFile1(juce::File file) {
     if (file.existsAsFile())
     {
         audioPlayer1.loadFile(file);
-        gui1.setPositionSliderRange(audioPlayer2.getLenght());
+        gui1.setPositionSliderRange(audioPlayer1.getLenght());
         gui1.loadWaveform(file);
-        handleClearAB2();
+        handleClearAB1();
         audioPlayer1.clearAllMarkers();
         gui1.updateMarkerList(audioPlayer1.getMarkersList());
         return true;
@@ -264,18 +323,18 @@ void MainComponent::handleLoadFile2()
     files2.clear();
     duration_files2.clear();
     fileChooser2 = std::make_unique<juce::FileChooser>("Select audio file for Track 2...", juce::File{}, "*.wav;*.mp3;*.flac;*.ogg");
-    fileChooser2->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems    ,
+    fileChooser2->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::canSelectMultipleItems,
         [this](const juce::FileChooser& fc)
         {
-            for(auto file : fc.getResults())
-            if (file.existsAsFile())
-            {
-                files2.push_back(file);
-                audioPlayer2.loadFile(file);
-                duration_files2.push_back(audioPlayer2.GetDuration());
-            }
-            gui2.setFiles(files1);
-            gui2.setFiles_Duration(duration_files1);
+            for (auto file : fc.getResults())
+                if (file.existsAsFile())
+                {
+                    files2.push_back(file);
+                    audioPlayer2.loadFile(file);
+                    duration_files2.push_back(audioPlayer2.GetDuration());
+                }
+            gui2.setFiles(files2);
+            gui2.setFiles_Duration(duration_files2);
         });
 }
 void MainComponent::handleRestart2()
@@ -297,27 +356,53 @@ void MainComponent::handleSkipForward2() { audioPlayer2.setPosition(std::min(aud
 void MainComponent::handleLoopToggled2(bool isLooping) { audioPlayer2.setLooping(isLooping); }
 void MainComponent::handleVolumeChanged2(float volume) { audioPlayer2.setVolume(volume); }
 void MainComponent::handlePositionChanged2(double newPosition) { audioPlayer2.setPosition(newPosition); }
+
+// --- MODIFIED ---
+// Updated logic for Player 2
 void MainComponent::handleSetA2()
 {
-    loopStartTime2 = audioPlayer2.getCurrentPosition();
-    if (loopEndTime2 > 0 && loopStartTime2 > loopEndTime2) { loopEndTime2 = -1.0; }
-    audioPlayer2.setLoopPoints(loopStartTime2, loopEndTime2);
+    double loopStartTime = audioPlayer2.getCurrentPosition();
+    double loopEndTime = audioPlayer2.getAbLoopEnd();
+
+    if (loopEndTime >= 0.0 && loopStartTime > loopEndTime)
+    {
+        loopEndTime = -1.0;
+    }
+    audioPlayer2.setLoopPoints(loopStartTime, loopEndTime);
     updateABButtons2();
 }
+
 void MainComponent::handleSetB2()
 {
-    loopEndTime2 = audioPlayer2.getCurrentPosition();
-    if (loopEndTime2 < loopStartTime2) { loopStartTime2 = 0.0; }
-    audioPlayer2.setLoopPoints(loopStartTime2, loopEndTime2);
+    double loopStartTime = audioPlayer2.getAbLoopStart();
+    double loopEndTime = audioPlayer2.getCurrentPosition();
+
+    if (loopStartTime < 0.0)
+    {
+        loopStartTime = 0.0;
+    }
+
+    if (loopEndTime < loopStartTime)
+    {
+        loopStartTime = 0.0;
+    }
+    audioPlayer2.setLoopPoints(loopStartTime, loopEndTime);
     updateABButtons2();
 }
+
 void MainComponent::handleClearAB2()
 {
-    loopStartTime2 = 0.0; loopEndTime2 = -1.0;
     audioPlayer2.clearLoopPoints();
     updateABButtons2();
 }
-void MainComponent::updateABButtons2() { gui2.updateABButtonColors(loopStartTime2 > 0.0, loopEndTime2 > 0.0); }
+
+void MainComponent::updateABButtons2()
+{
+    bool aSet = audioPlayer2.getAbLoopStart() >= 0.0;
+    bool bSet = audioPlayer2.getAbLoopEnd() >= 0.0;
+    gui2.updateABButtonColors(aSet, bSet);
+}
+// --- END MODIFIED ---
 
 void MainComponent::handleStartButton2() {
     audioPlayer2.setPosition(0.0);
@@ -330,9 +415,7 @@ void MainComponent::handleEndButton2() {
 bool MainComponent::slectedFile2(juce::File file) {
     if (file.existsAsFile())
     {
-        files2.push_back(file);
         audioPlayer2.loadFile(file);
-        duration_files2.push_back(audioPlayer1.GetDuration());
         gui2.setPositionSliderRange(audioPlayer2.getLenght());
         gui2.loadWaveform(file);
         handleClearAB2();
@@ -356,7 +439,7 @@ void MainComponent::saveSessionToDisk()
     auto file1 = audioPlayer1.getCurrentFile();
     content += (file1.existsAsFile() ? file1.getFullPathName() : juce::String()) + "\n";
     content += juce::String(audioPlayer1.getCurrentPosition()) + "\n";
-    
+
     auto markers1 = audioPlayer1.getMarkersMap();
     for (auto& kv : markers1)
     {
@@ -392,7 +475,7 @@ void MainComponent::loadSessionFromDisk()
     lines.addLines(content);
 
     int idx = 0;
-     
+
     if (idx < lines.size() && lines[idx].trim() == "TRACK1") idx++;
     juce::String path1 = (idx < lines.size() ? lines[idx++].trim() : juce::String());
     juce::String pos1 = (idx < lines.size() ? lines[idx++].trim() : juce::String());
@@ -428,7 +511,7 @@ void MainComponent::loadSessionFromDisk()
         {
             audioPlayer1.loadFile(f1);
             gui1.setPositionSliderRange(audioPlayer1.getLenght());
-            gui1.loadWaveform(f1); 
+            gui1.loadWaveform(f1);
             if (pos1.isNotEmpty()) audioPlayer1.setPosition(pos1.getDoubleValue());
             audioPlayer1.setMarkersMap(markers1);
             gui1.updateMarkerList(audioPlayer1.getMarkersList());
@@ -442,7 +525,7 @@ void MainComponent::loadSessionFromDisk()
         {
             audioPlayer2.loadFile(f2);
             gui2.setPositionSliderRange(audioPlayer2.getLenght());
-            gui2.loadWaveform(f2); 
+            gui2.loadWaveform(f2);
             if (pos2.isNotEmpty()) audioPlayer2.setPosition(pos2.getDoubleValue());
             audioPlayer2.setMarkersMap(markers2);
             gui2.updateMarkerList(audioPlayer2.getMarkersList());

@@ -129,7 +129,7 @@ public:
         }
         else
         {
-            g.setColour(juce::Colour(0xff007aff)); 
+            g.setColour(juce::Colour(0xff007aff));
             thumbnail.drawChannel(g, getLocalBounds(), 0.0, thumbnail.getTotalLength(), 0, 1.0f);
         }
     }
@@ -154,7 +154,7 @@ static juce::String formatTime(double seconds)
 
 PlayerGUI::PlayerGUI()
 {
-    for (auto* btn : { &loadButton, &restartButton, &playStopButton, &setAButton, &setBButton, &clearABButton, &forwardButton, &backwardButton, &muteButton, &StartButton, &EndButton})
+    for (auto* btn : { &loadButton, &restartButton, &playStopButton, &setAButton, &setBButton, &clearABButton, &forwardButton, &backwardButton, &muteButton, &StartButton, &EndButton })
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
@@ -222,9 +222,9 @@ PlayerGUI::PlayerGUI()
     waveformDisplay = std::make_unique<WaveformDisplay>();
     addAndMakeVisible(waveformDisplay.get());
     setSize(400, 200);
-    list.getHeader().addColumn("name",1,400);
-    list.getHeader().addColumn("duration(HH:MM:SS)",2,160);
-    list.getHeader().addColumn("Delete",3,120);
+    list.getHeader().addColumn("name", 1, 400);
+    list.getHeader().addColumn("duration(HH:MM:SS)", 2, 160);
+    list.getHeader().addColumn("Delete", 3, 120);
     list.setModel(this);
     addAndMakeVisible(list);
 
@@ -249,8 +249,8 @@ void PlayerGUI::resized()
 {
     const int margin = 8;
     const int rowMargin = 5;
-    const int sliderWidth = 45;        
-    const int buttonHeight = 70;      
+    const int sliderWidth = 45;
+    const int buttonHeight = 70;
     const int markerAreaWidth = 60;
     const int waveformHeight = 60;
     const int topHeight = 30;
@@ -266,7 +266,7 @@ void PlayerGUI::resized()
 
     addMarkerButton.setBounds(markerArea.getX() + rowMargin, markerArea.getY(), markerAreaWidth - (2 * rowMargin), markerButtonHeight);
     markerList.setBounds(markerArea.getX() + rowMargin, markerArea.getY() + markerButtonHeight + rowMargin, markerAreaWidth - (2 * rowMargin), markerListHeight);
-    list.setBounds(0,320,getWidth(),getHeight()-320);
+    list.setBounds(0, 320, getWidth(), getHeight() - 320);
     juce::Rectangle<int> topRow = area.removeFromTop(topHeight);
 
     loadButton.setBounds(topRow.removeFromRight(80).reduced(0, 2));
@@ -301,7 +301,7 @@ void PlayerGUI::resized()
     juce::Rectangle<int> buttonGridArea = area.reduced(5);
     int numButtonsInRow = 11;
 
-    int buttonWidth = ((buttonGridArea.getWidth() - ((numButtonsInRow - 1) * rowMargin)) / numButtonsInRow )+ 7;
+    int buttonWidth = ((buttonGridArea.getWidth() - ((numButtonsInRow - 1) * rowMargin)) / numButtonsInRow) + 7;
 
     int x = buttonGridArea.getX();
     int y = buttonGridArea.getY();
@@ -321,10 +321,10 @@ void PlayerGUI::resized()
     StartButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
     EndButton.setBounds(x, y, buttonWidth, buttonHeight);
 
-    y+=buttonHeight;
-    filepath.setBounds(0, y+20,getWidth()-40,30);
-    name.setBounds(0, y+40,getWidth()-40,30);
-    time.setBounds(0, y+60,getWidth()-40,30);
+    y += buttonHeight;
+    filepath.setBounds(0, y + 20, getWidth() - 40, 30);
+    name.setBounds(0, y + 40, getWidth() - 40, 30);
+    time.setBounds(0, y + 60, getWidth() - 40, 30);
 }
 
 void PlayerGUI::buttonClicked(juce::Button* button)
@@ -402,13 +402,13 @@ void PlayerGUI::setPlayStopButtonState(bool isPlaying)
     playStopButton.repaint();
 }
 
-void PlayerGUI::setFiles(std::vector<juce::File> &files) {
+void PlayerGUI::setFiles(std::vector<juce::File>& files) {
     this->files = files;
     list.updateContent();
 }
 
-void PlayerGUI::setFiles_Duration(std::vector<juce::String> &durations) {
-    this->duration_files=durations;
+void PlayerGUI::setFiles_Duration(std::vector<juce::String>& durations) {
+    this->duration_files = durations;
     list.updateContent();
 }
 
@@ -416,46 +416,46 @@ int PlayerGUI::getNumRows() {
     return files.size();
 }
 
-void PlayerGUI::paintRowBackground(juce::Graphics &g, int rowNumber, int weidth, int height, bool rowCliked) {
-    if(rowCliked)
+void PlayerGUI::paintRowBackground(juce::Graphics& g, int rowNumber, int weidth, int height, bool rowCliked) {
+    if (rowCliked)
     {
         g.fillAll(juce::Colours::lightblue);
-        rowCliked=0;
+        rowCliked = 0;
     }
     else
     {
-        if(rowNumber%2)g.fillAll(juce::Colours::grey);
+        if (rowNumber % 2)g.fillAll(juce::Colours::grey);
         else g.fillAll(juce::Colours::lightgrey);
     }
 }
 
-void PlayerGUI::paintCell(juce::Graphics &g, int rowNumber, int columnId, int weidth, int height, bool rowClike) {
-    if(rowNumber<getNumRows())
+void PlayerGUI::paintCell(juce::Graphics& g, int rowNumber, int columnId, int weidth, int height, bool rowClike) {
+    if (rowNumber < getNumRows())
     {
         juce::String name_file = files[rowNumber].getFileName();
         juce::String file_duration = duration_files[rowNumber];
 
-        if(columnId==1)
-            g.drawText(name_file,0, 2,weidth,height,juce::Justification::topLeft,true);
+        if (columnId == 1)
+            g.drawText(name_file, 0, 2, weidth, height, juce::Justification::topLeft, true);
 
-        else if(columnId==2)
-            g.drawText(file_duration,0,2,weidth,height,juce::Justification::topLeft,true);
+        else if (columnId == 2)
+            g.drawText(file_duration, 0, 2, weidth, height, juce::Justification::topLeft, true);
 
-        else if(columnId==3)
+        else if (columnId == 3)
         {
-            juce::TextButton Delete { "Delete" };
-            Delete.setBounds(0,0,weidth,height);
-            Delete.paintButton(g,1,1);
+            juce::TextButton Delete{ "Delete" };
+            Delete.setBounds(0, 0, weidth, height);
+            Delete.paintButton(g, 1, 1);
         }
     }
 }
 
-void PlayerGUI::cellClicked(int rowNumber, int columnId, const juce::MouseEvent &mouse) {
-    if (columnId==1||columnId==2) {
+void PlayerGUI::cellClicked(int rowNumber, int columnId, const juce::MouseEvent& mouse) {
+    if (columnId == 1 || columnId == 2) {
         onSelected(files[rowNumber]);
-        metadata(files[rowNumber].getFullPathName(),files[rowNumber].getFileName(),duration_files[rowNumber]);
+        metadata(files[rowNumber].getFullPathName(), files[rowNumber].getFileName(), duration_files[rowNumber]);
     }
-    else if (columnId==3) {
+    else if (columnId == 3) {
         if (onSelected(files[rowNumber]))
             onDelete();
         files.erase(files.begin() + rowNumber);
@@ -465,9 +465,9 @@ void PlayerGUI::cellClicked(int rowNumber, int columnId, const juce::MouseEvent 
 }
 
 void PlayerGUI::metadata(juce::String path, juce::String name, juce::String time) {
-    filepath.setText("path:: " + path,juce::dontSendNotification);
-    this->name.setText("name:: " + name,juce::dontSendNotification);
-    this->time.setText("time:: "+time,juce::dontSendNotification);
+    filepath.setText("path:: " + path, juce::dontSendNotification);
+    this->name.setText("name:: " + name, juce::dontSendNotification);
+    this->time.setText("time:: " + time, juce::dontSendNotification);
 
     filepath.setFont(18.0f);
     this->name.setFont(18.0f);

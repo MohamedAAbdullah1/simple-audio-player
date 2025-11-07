@@ -30,7 +30,7 @@ private:
         {
             setUsingNativeTitleBar(true);
             setContentOwned(new MainComponent(), true);
-            centreWithSize(1400,700);
+            centreWithSize(1400, 700);
             setVisible(true);
         }
 

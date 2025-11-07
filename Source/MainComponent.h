@@ -44,17 +44,19 @@ private:
     std::unique_ptr<juce::FileChooser> fileChooser1;
     std::unique_ptr<juce::FileChooser> fileChooser2;
 
-
-    double loopStartTime1 = 0.0;
-    double loopEndTime1 = -1.0;
-
-    double loopStartTime2 = 0.0;
-    double loopEndTime2 = -1.0;
+    // --- REMOVED ---
+    // This state is now correctly stored inside each PlayerAudio instance.
+    // Keeping it here is redundant and leads to bugs.
+    // double loopStartTime1 = 0.0;
+    // double loopEndTime1 = -1.0;
+    // double loopStartTime2 = 0.0;
+    // double loopEndTime2 = -1.0;
+    // --- END REMOVED ---
 
     juce::File sessionFile = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
         .getChildFile("SimpleAudioPlayerSession.txt");
 
-    
+
     void saveSessionToDisk();
     void loadSessionFromDisk();
 

@@ -39,13 +39,13 @@ public:
     void updateABButtonColors(bool aSet, bool bSet);
     void setTrackName(const juce::String& name);
     void setPlayStopButtonState(bool isPlaying);
-    void setFiles( std::vector<juce::File>& files);
-    void setFiles_Duration( std::vector<juce::String>& durations);
+    void setFiles(std::vector<juce::File>& files);
+    void setFiles_Duration(std::vector<juce::String>& durations);
     int getNumRows() override;
-    void paintRowBackground(juce::Graphics &g, int rowNumber, int weidth, int height, bool rowCliked) override;
-    void paintCell(juce::Graphics &g, int rowNumber, int columnId, int weidth, int height, bool rowClike) override;
-    void cellClicked(int rowNumber,int columnId,const juce::MouseEvent& mouse) override;
-    void metadata(juce::String path,juce::String name,juce::String time);
+    void paintRowBackground(juce::Graphics& g, int rowNumber, int weidth, int height, bool rowCliked) override;
+    void paintCell(juce::Graphics& g, int rowNumber, int columnId, int weidth, int height, bool rowClike) override;
+    void cellClicked(int rowNumber, int columnId, const juce::MouseEvent& mouse) override;
+    void metadata(juce::String path, juce::String name, juce::String time);
 
 
     std::function<void()> onAddMarker;
