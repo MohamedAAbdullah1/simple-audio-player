@@ -15,12 +15,12 @@ public:
     void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
     void getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) override;
     void releaseResources() override;
-
     void paint(juce::Graphics& g) override;
     void resized() override;
-
     void sliderValueChanged(juce::Slider* slider) override;
     void timerCallback() override;
+
+
 
 private:
     juce::MixerAudioSource mixerSource;
@@ -32,10 +32,18 @@ private:
     juce::Slider crossfader;
     juce::Label crossfaderLabel;
 
+    std::vector<juce::File>files1;
+    std::vector<juce::String>duration_files1;
+
+    std::vector<juce::File>files2;
+    std::vector<juce::String>duration_files2;
+
+
     CustomLookAndFeel globalLookAndFeel;
 
     std::unique_ptr<juce::FileChooser> fileChooser1;
     std::unique_ptr<juce::FileChooser> fileChooser2;
+
 
     double loopStartTime1 = 0.0;
     double loopEndTime1 = -1.0;
@@ -63,6 +71,12 @@ private:
     void handleSetB1();
     void handleClearAB1();
     void updateABButtons1();
+    void handleStartButton1();
+    void handleEndButton1();
+    bool slectedFile1(juce::File f);
+    void deleteSelectedFiles1();
+
+
 
     void handleLoadFile2();
     void handleRestart2();
@@ -77,6 +91,11 @@ private:
     void handleSetB2();
     void handleClearAB2();
     void updateABButtons2();
+    void handleStartButton2();
+    void handleEndButton2();
+    bool slectedFile2(juce::File f);
+    void deleteSelectedFiles2();
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

@@ -52,20 +52,21 @@ void PlayerAudio::loadFile(const juce::File& file)
     if (!file.existsAsFile())
         return;
 
+
     if (auto* reader = formatManager.createReaderFor(file))
     {
         transportSource->stop();
         transportSource->setSource(nullptr);
         readerSource.reset();
-
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
         transportSource->setSource(readerSource.get(), 0, nullptr, reader->sampleRate);
-
         resamplerSource->setResamplingRatio(playbackSpeed);
+        filp=file.getFullPathName();
+        filn=file.getFileName();
 
         currentFile = file;
 
-        transportSource->start();
+        // transportSource->start();
     }
 }
 
@@ -77,6 +78,32 @@ double PlayerAudio::getLenght() { return transportSource->getLengthInSeconds(); 
 void PlayerAudio::setLooping(bool shouldLoop) { looping = shouldLoop; }
 bool PlayerAudio::isLooping() const { return looping; }
 bool PlayerAudio::isPlaying() const { return transportSource->isPlaying(); }
+
+juce::String PlayerAudio::GetDuration() {
+    int length=getLenght();
+    int time_h = length/3600;
+    length-=time_h*3600;
+    int time_m=length/60;
+    length-=time_m*60;
+
+    std::string hour = std::to_string(time_h);
+    std::string mintut = std::to_string(time_m);
+    std::string second = std::to_string(length);
+
+    hour=(hour.size()==1?"0"+hour:hour);
+    mintut=(mintut.size()==1?"0"+mintut:mintut);
+    second=(second.size()==1?"0"+second:second);
+    juce::String full_time = hour + ":" + mintut + ":" + second;
+    return juce::String(full_time);
+}
+
+juce::String PlayerAudio::getPath() {
+ return filp;
+}
+
+juce::String PlayerAudio::getFileName() {
+    return filn;
+}
 
 void PlayerAudio::setSpeed(double newSpeed)
 {
@@ -102,6 +129,12 @@ void PlayerAudio::clearLoopPoints()
     abLoopStart = 0.0;
     abLoopEnd = -1.0;
     abLoopEngaged = false;
+}
+
+void PlayerAudio::Delete() {
+    transportSource->stop();
+    transportSource->setSource(nullptr);
+    readerSource.reset();
 }
 
 void PlayerAudio::setVolume(float volume)
@@ -147,3 +180,4 @@ void PlayerAudio::clearAllMarkers()
 {
     markers.clear();
 }
+

@@ -154,7 +154,7 @@ static juce::String formatTime(double seconds)
 
 PlayerGUI::PlayerGUI()
 {
-    for (auto* btn : { &loadButton, &restartButton, &playStopButton, &setAButton, &setBButton, &clearABButton, &forwardButton, &backwardButton, &muteButton })
+    for (auto* btn : { &loadButton, &restartButton, &playStopButton, &setAButton, &setBButton, &clearABButton, &forwardButton, &backwardButton, &muteButton, &StartButton, &EndButton})
     {
         btn->addListener(this);
         addAndMakeVisible(btn);
@@ -169,7 +169,8 @@ PlayerGUI::PlayerGUI()
     forwardButton.setButtonText("+10s");
     backwardButton.setButtonText("-10s");
     muteButton.setButtonText("Mute");
-
+    StartButton.setButtonText("|<");
+    EndButton.setButtonText(">|");
     loopButton.addListener(this);
     loopButton.setButtonText("Loop");
     addAndMakeVisible(loopButton);
@@ -220,8 +221,16 @@ PlayerGUI::PlayerGUI()
 
     waveformDisplay = std::make_unique<WaveformDisplay>();
     addAndMakeVisible(waveformDisplay.get());
-
     setSize(400, 200);
+    list.getHeader().addColumn("name",1,400);
+    list.getHeader().addColumn("duration(HH:MM:SS)",2,160);
+    list.getHeader().addColumn("Delete",3,120);
+    list.setModel(this);
+    addAndMakeVisible(list);
+
+    addAndMakeVisible(filepath);
+    addAndMakeVisible(name);
+    addAndMakeVisible(time);
 }
 
 PlayerGUI::~PlayerGUI()
@@ -257,7 +266,7 @@ void PlayerGUI::resized()
 
     addMarkerButton.setBounds(markerArea.getX() + rowMargin, markerArea.getY(), markerAreaWidth - (2 * rowMargin), markerButtonHeight);
     markerList.setBounds(markerArea.getX() + rowMargin, markerArea.getY() + markerButtonHeight + rowMargin, markerAreaWidth - (2 * rowMargin), markerListHeight);
-
+    list.setBounds(0,320,getWidth(),getHeight()-320);
     juce::Rectangle<int> topRow = area.removeFromTop(topHeight);
 
     loadButton.setBounds(topRow.removeFromRight(80).reduced(0, 2));
@@ -287,13 +296,12 @@ void PlayerGUI::resized()
             positionArea.getWidth(),
             waveformHeight);
     }
-
     area.removeFromTop(waveformY - area.getY() + waveformHeight + rowMargin);
 
     juce::Rectangle<int> buttonGridArea = area.reduced(5);
-    int numButtonsInRow = 9;
+    int numButtonsInRow = 11;
 
-    int buttonWidth = (buttonGridArea.getWidth() - ((numButtonsInRow - 1) * rowMargin)) / numButtonsInRow;
+    int buttonWidth = ((buttonGridArea.getWidth() - ((numButtonsInRow - 1) * rowMargin)) / numButtonsInRow )+ 7;
 
     int x = buttonGridArea.getX();
     int y = buttonGridArea.getY();
@@ -308,7 +316,15 @@ void PlayerGUI::resized()
     clearABButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
 
     backwardButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
-    forwardButton.setBounds(x, y, buttonWidth, buttonHeight);
+    forwardButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+
+    StartButton.setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + rowMargin;
+    EndButton.setBounds(x, y, buttonWidth, buttonHeight);
+
+    y+=buttonHeight;
+    filepath.setBounds(0, y+20,getWidth()-40,30);
+    name.setBounds(0, y+40,getWidth()-40,30);
+    time.setBounds(0, y+60,getWidth()-40,30);
 }
 
 void PlayerGUI::buttonClicked(juce::Button* button)
@@ -333,6 +349,9 @@ void PlayerGUI::buttonClicked(juce::Button* button)
     {
         onAddMarker();
     }
+
+    else if (button == &StartButton)onStartButton();
+    else if (button == &EndButton)onEndButton();
 }
 
 void PlayerGUI::sliderValueChanged(juce::Slider* slider)
@@ -382,6 +401,79 @@ void PlayerGUI::setPlayStopButtonState(bool isPlaying)
     playStopButton.setColour(juce::TextButton::buttonColourId, isPlaying ? findColour(juce::TextButton::buttonOnColourId) : findColour(juce::TextButton::buttonColourId));
     playStopButton.repaint();
 }
+
+void PlayerGUI::setFiles(std::vector<juce::File> &files) {
+    this->files = files;
+    list.updateContent();
+}
+
+void PlayerGUI::setFiles_Duration(std::vector<juce::String> &durations) {
+    this->duration_files=durations;
+    list.updateContent();
+}
+
+int PlayerGUI::getNumRows() {
+    return files.size();
+}
+
+void PlayerGUI::paintRowBackground(juce::Graphics &g, int rowNumber, int weidth, int height, bool rowCliked) {
+    if(rowCliked)
+    {
+        g.fillAll(juce::Colours::lightblue);
+        rowCliked=0;
+    }
+    else
+    {
+        if(rowNumber%2)g.fillAll(juce::Colours::grey);
+        else g.fillAll(juce::Colours::lightgrey);
+    }
+}
+
+void PlayerGUI::paintCell(juce::Graphics &g, int rowNumber, int columnId, int weidth, int height, bool rowClike) {
+    if(rowNumber<getNumRows())
+    {
+        juce::String name_file = files[rowNumber].getFileName();
+        juce::String file_duration = duration_files[rowNumber];
+
+        if(columnId==1)
+            g.drawText(name_file,0, 2,weidth,height,juce::Justification::topLeft,true);
+
+        else if(columnId==2)
+            g.drawText(file_duration,0,2,weidth,height,juce::Justification::topLeft,true);
+
+        else if(columnId==3)
+        {
+            juce::TextButton Delete { "Delete" };
+            Delete.setBounds(0,0,weidth,height);
+            Delete.paintButton(g,1,1);
+        }
+    }
+}
+
+void PlayerGUI::cellClicked(int rowNumber, int columnId, const juce::MouseEvent &mouse) {
+    if (columnId==1||columnId==2) {
+        onSelected(files[rowNumber]);
+        metadata(files[rowNumber].getFullPathName(),files[rowNumber].getFileName(),duration_files[rowNumber]);
+    }
+    else if (columnId==3) {
+        if (onSelected(files[rowNumber]))
+            onDelete();
+        files.erase(files.begin() + rowNumber);
+        duration_files.erase(duration_files.begin() + rowNumber);
+        list.updateContent();
+    }
+}
+
+void PlayerGUI::metadata(juce::String path, juce::String name, juce::String time) {
+    filepath.setText("path:: " + path,juce::dontSendNotification);
+    this->name.setText("name:: " + name,juce::dontSendNotification);
+    this->time.setText("time:: "+time,juce::dontSendNotification);
+
+    filepath.setFont(18.0f);
+    this->name.setFont(18.0f);
+    this->time.setFont(18.0f);
+}
+
 
 void PlayerGUI::updateMarkerList(const juce::StringArray& list)
 {
